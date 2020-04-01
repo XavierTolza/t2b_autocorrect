@@ -1,0 +1,5 @@
+t2b/*.jpg
+venv
+.idea
+tmp*.py
+*_corrected.jpg
