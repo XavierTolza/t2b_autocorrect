@@ -1,8 +1,10 @@
+from os.path import abspath, dirname, join
+
 import numpy as np
 
 Nb_dots = np.array([40, 25])  # nombre de points
 
-with open("./correction.txt", "r") as fp:
+with open(join(dirname(abspath(__file__)), "correction.txt"), "r") as fp:
     corrections = fp.read().replace("\n", "")
 corrections = np.array(list(corrections)).astype(np.uint8).reshape((-1,) + tuple(Nb_dots))
 corrections = corrections[:, :, ::-1]

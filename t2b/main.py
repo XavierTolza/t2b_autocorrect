@@ -19,7 +19,7 @@ def make_gaussian_kernel(kernel_size, sigma=5):
     return kernel
 
 
-def find_image_coordinates(image):
+def find_image_coordinates(image, debug=False):
     shape = image.shape
     dots = image.std(-1)
     kernel_size = int(np.min(shape[:-1]) / 100)
@@ -28,10 +28,11 @@ def find_image_coordinates(image):
         dots = convolve2d(dots, kernel, mode="same")
 
     # On choisit un seuil de trigger à 98%
+    dots = normalize(dots)
     trigger = np.sort(dots.ravel())[int(dots.size * 0.98)]
-    dots = dots > trigger
+    dots_trigger = dots > trigger
 
-    cnt = cv2.findContours(dots.astype(np.uint8), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2]
+    cnt = cv2.findContours(dots_trigger.astype(np.uint8), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2]
     coord = np.round(np.array([np.median(i[:, 0, :], 0) for i in cnt])).astype(np.uint)
     coordr = coord / np.array(shape[:2])[None, ::-1]
 
@@ -39,6 +40,8 @@ def find_image_coordinates(image):
     margin = 0.01
     selector = np.logical_and(coordr > margin, coordr < (1 - margin)).all(1)
 
+    if debug:
+        return coord[selector], dots
     return coord[selector]
 
 
@@ -80,7 +83,7 @@ def evaluate(grid, coord, correction):
 
 def plot_result(image, grid, coord, result, ax=None, debug=False):
     if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=(30//2, 21//2))
+        fig, ax = plt.subplots(1, 1, figsize=(30 // 2, 21 // 2))
     correct, correction, index = result["is_correct"], result["correction"], result["index"]
     ax.imshow(image)
     kwargs = dict(facecolor="none", s=200)
