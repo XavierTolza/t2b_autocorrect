@@ -20,18 +20,18 @@ def make_gaussian_kernel(kernel_size, sigma=5):
     return kernel
 
 
-def find_image_coordinates(image, debug=False):
+def find_image_coordinates(image, trigger=0.5, debug=False):
     shape = image.shape
     dots = image.std(-1)
     kernel_size = int(np.min(shape[:-1]) / 100)
     if kernel_size > 1:
         kernel = make_gaussian_kernel(kernel_size)
         dots = convolve2d(dots, kernel, mode="same")
-
-    # On choisit un seuil de trigger à 98%
     dots = normalize(dots)
-    trigger = np.sort(dots.ravel())[int(dots.size * 0.98)]
-    dots_trigger = dots > trigger
+
+    # trigger = np.sort(dots.ravel())[int(dots.size * 0.98)]
+    dots_blur = normalize(convolve2d(dots, make_gaussian_kernel(int(image.shape[0] * 30 / 1342)), mode="same"))
+    dots_trigger = dots_blur > trigger
 
     cnt = cv2.findContours(dots_trigger.astype(np.uint8), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2]
     coord = np.round(np.array([np.median(i[:, 0, :], 0) for i in cnt])).astype(np.uint)
