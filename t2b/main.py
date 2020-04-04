@@ -9,6 +9,7 @@ from imutils.perspective import four_point_transform
 from scipy.signal import convolve2d
 
 from t2b.constants import Nb_dots
+from t2b.tools import charger_motifs
 
 
 def make_gaussian_kernel(kernel_size, sigma=5):
@@ -64,6 +65,17 @@ def find_grid_coordinates(coord):
                                    for n, (start, stop) in zip(Nb_dots, box.T)])))
 
     return grid
+
+
+def find_grid_coordinates2(image):
+    imbw = -image.max(-1).astype(np.float32)
+    imbw = normalize(imbw)
+    kernel_size = int(imbw.shape[0] * 93 / 3000)
+    kernel = charger_motifs(["all"])[0]
+    kernel = cv2.resize(kernel, (kernel_size, kernel_size))
+
+    imc = normalize(convolve2d(imbw, kernel))
+    return
 
 
 def evaluate(grid, coord, correction):

@@ -1,4 +1,5 @@
 import tarfile
+from os.path import abspath, dirname, join
 
 import cv2
 import numpy as np
@@ -7,13 +8,19 @@ from t2b.constants import Nb_dots as N
 from PIL import Image
 
 
-def generate_test_image(correction):
+def charger_motifs(noms):
     symbols = []
-    with tarfile.open("motifs.tar.xz") as tar:
-        for i in "12346789":
+    filename = join(dirname(abspath(__file__)), "motifs.tar.xz")
+    with tarfile.open(filename) as tar:
+        for i in noms:
             im = Image.open(tar.extractfile(tar.getmember(f"{i}.png")))
             symbols.append(np.array(im))
-    _symbols = np.array(symbols)[:, :, :, -1]
+    symbols = np.array(symbols)[:, :, :, -1]
+    return symbols
+
+
+def generate_test_image(correction):
+    _symbols = charger_motifs("12346789")
     newshape = int(_symbols.shape[1] * 1.05012823501982)
     symbols = np.zeros((8, _symbols.shape[1], newshape))
     symbols[:, :,

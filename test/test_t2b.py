@@ -1,7 +1,7 @@
 from glob import glob
 from unittest import TestCase
 
-from t2b.constants import correction
+from t2b.constants import corrections
 from t2b.main import *
 
 
@@ -22,7 +22,7 @@ class Test(TestCase):
 
     def test_find_images_coordinates(self):
         for image in self.images:
-            load_image(image)
+            im = load_image(image)
             find_image_coordinates(im)
 
     def test_find_grid_coordinates(self):
@@ -36,12 +36,23 @@ class Test(TestCase):
             ax.scatter(*coord.T)
             pass
 
+    def test_find_grid_coordinates2(self):
+        for image in self.images:
+            im = load_image(image)
+            coord = find_image_coordinates(im)
+            grid = find_grid_coordinates2(im)
+
+            fig, ax = plt.subplots(1, 1)
+            ax.imshow(im)
+            ax.scatter(*coord.T)
+            pass
+
     def test_correction(self):
         for image in self.images:
             image = load_image(image)
             coord = find_image_coordinates(image)
             grid = find_grid_coordinates(coord)
-            result = evaluate(grid, coord, correction[0])
+            result = evaluate(grid, coord, corrections[0] == 6)
 
-            plot_result(image, grid, coord, result,debug=False)
+            plot_result(image, grid, coord, result, debug=False)
             pass
