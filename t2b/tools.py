@@ -8,6 +8,10 @@ from t2b.constants import Nb_dots as N
 from PIL import Image
 
 
+def rot_matrix(theta):
+    return np.reshape([np.cos(-theta), np.sin(-theta), -np.sin(-theta), np.cos(-theta)], (2, 2))
+
+
 def charger_motifs(noms):
     symbols = []
     filename = join(dirname(abspath(__file__)), "motifs.tar.xz")

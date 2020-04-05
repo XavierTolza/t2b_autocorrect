@@ -8,9 +8,12 @@ from PIL import Image
 from imutils.perspective import four_point_transform
 from scipy.signal import convolve2d
 
+from t2b.c_funs import likelihood
 from t2b.constants import Nb_dots
 from t2b.tools import charger_motifs
-from t2b.c_funs import likelihood
+
+
+# from t2b.c_funs import likelihood
 
 
 def make_gaussian_kernel(kernel_size, sigma=5):
@@ -91,14 +94,10 @@ def find_grid_coordinates2(image):
     angle = np.deg2rad(np.arange(-2, 2, 0.1)).astype(np.float64)
     start = (np.arange(-20, 21) + np.mean([53, 67])).astype(np.uint32)
     size = np.arange(35, 45).astype(np.uint32)
+    shape = (start.size, start.size, size.size, size.size, angle.size)
+    cost = np.zeros(shape)
 
-    cost = likelihood(start[:, None, None, None, None],
-                      start[None, :, None, None, None],
-                      size[None, None, :, None, None],
-                      size[None, None, None, :, None],
-                      angle[None, None, None, None, :],
-                      imc)
-    cost = _likelihood(np.array([53, 67]), [18, 18], np.deg2rad(-1), imc)
+    likelihood(start, size, angle, imc, cost.ravel())
     pass
 
 

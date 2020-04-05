@@ -1,8 +1,10 @@
 from glob import glob
 from unittest import TestCase
 
+from t2b.c_funs import likelihood
 from t2b.constants import corrections
 from t2b.main import *
+from t2b.tools import rot_matrix
 
 
 class Test(TestCase):
@@ -36,20 +38,28 @@ class Test(TestCase):
             ax.scatter(*coord.T)
             pass
 
-    def test_unravel_index(self):
-        index = np.arange(6 * 8)
-        shape = (6, 8)
-        res = np.zeros((6 * 8, 2), dtype=np.uint64)
-        for i in index:
-            unravel_index(i, shape, res[i])
-        assert np.all(np.array([np.unravel_index(index, shape)])[0].T == res)
-
     def test_likelihood(self):
-        from t2b.c_funs import likelihood
-        for image in self.images:
-            image = load_image(image).mean(-1)
-            res = likelihood(0, 0, 10, 10, 0, image)
-            pass
+        shape = (600, 800)
+        img = np.zeros(shape)
+        margin = 25
+        scale = (np.array(shape) - margin * 2) / Nb_dots[::-1]
+        x, y = [np.arange(i) * s for i, s in zip(Nb_dots[::-1], scale)]
+        xy = np.array(list(product(x, y)))
+        R = rot_matrix(np.deg2rad(-0.5))
+        xy = R.dot(xy.T).T
+        xy += np.array([margin] * 2)[None]
+        xy = xy.astype(np.uint)
+        img[xy[:, 0], xy[:, 1]] = 1
+        img = normalize(convolve2d(img, make_gaussian_kernel(10), mode="same")).astype(np.float64)
+        plt.imshow(img)
+        angle = np.arange(-1, 1, 0.1).astype(np.float64)
+        start = np.arange(margin - 10, margin + 10).astype(np.uint32)
+        size = np.arange(18, 25).astype(np.uint32)
+        shape = (start.size, start.size, size.size, size.size, angle.size)
+        res = np.zeros(shape, dtype=np.float64) - 1
+        likelihood(start, size, angle, img, res.ravel())
+        plt.imshow(res[:, :, -1, -1, 0], extent=[start.min(), start.max(), start.min(), start.max()])
+        pass
 
     def test_find_grid_coordinates2(self):
         for image in self.images:
