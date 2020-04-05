@@ -10,7 +10,7 @@ from scipy.signal import convolve2d
 
 from t2b.c_funs import likelihood, gen_all_indexes
 from t2b.constants import Nb_dots
-from t2b.tools import charger_motifs
+from t2b.tools import charger_motifs, rot_matrix
 
 
 # from t2b.c_funs import likelihood
@@ -29,8 +29,7 @@ def find_image_coordinates(image, trigger=0.5, debug=False):
     dots = image.std(-1)
     kernel_size = int(np.min(shape[:-1]) / 100)
     if kernel_size > 1:
-        kernel = make_gaussian_kernel(kernel_size)
-        dots = convolve2d(dots, kernel, mode="same")
+        dots = cv2.blur(dots, (kernel_size,) * 2)
     dots = normalize(dots)
 
     # trigger = np.sort(dots.ravel())[int(dots.size * 0.98)]
@@ -44,6 +43,7 @@ def find_image_coordinates(image, trigger=0.5, debug=False):
     # On filtre les points qui sont trop près des bords
     margin = 0.01
     selector = np.logical_and(coordr > margin, coordr < (1 - margin)).all(1)
+    coord = coord[:, ::-1]
 
     if debug:
         return coord[selector], dots
@@ -87,6 +87,16 @@ def match_filter_image(image, kernel_size=15):
     return imc
 
 
+def gen_all_indexes(offset, scale, angle):
+    x, y = [np.arange(i) * s for i, s in zip(Nb_dots, scale)]
+    xy = np.array(list(product(x, y)))
+    R = rot_matrix(angle)
+    xy = R.dot(xy.T).T
+    xy += np.array(offset)[None]
+    xy = xy.astype(np.uint)
+    return xy
+
+
 def find_grid_coordinates2(image):
     imc = match_filter_image(image).astype(np.float64)
     cv2.imwrite("/tmp/out.jpg", (imc * 255).astype(np.uint8))
@@ -99,22 +109,13 @@ def find_grid_coordinates2(image):
         np.linspace(450 / 600, 500 / 600, 10),
     ]) * shape[:, None]
     offset = (np.array([
-        np.linspace(30 / 846, 90 / 846, 10),
-        np.linspace(40 / 600, 100 / 600, 10),
+        np.linspace(30 / 846, 90 / 846, 15),
+        np.linspace(40 / 600, 100 / 600, 15),
     ]) * shape[:, None]).astype(np.uint32)
 
     size = (rect_size / Nb_dots[:, None]).astype(np.float64)
     shape = (offset.shape[1], offset.shape[1], size.shape[1], size.shape[1], angle.size)
     cost = np.zeros(shape)
-
-    # debug
-    # a, b, c = abc = np.array([[55, 68], [771, 537], [777, 74]])
-    # angle = np.arctan2((c - a)[1], (c - a)[0])
-    # from t2b.tools import rot_matrix
-    # R = rot_matrix(-angle)
-    # a, b, c = R.dot(abc.T).T
-    # sx = 727 / 39
-    # sy = 464 / (Nb_dots[1] - 1)
 
     likelihood(*offset, *size, angle, imc, cost.ravel())
 
@@ -122,9 +123,8 @@ def find_grid_coordinates2(image):
     argmax = np.unravel_index(cost.ravel().argmax(), cost.shape)
     values = np.array([i[j] for i, j in zip([offset[0], offset[1], size[0], size[1], angle], argmax)])
 
-    plt.imshow(np.moveaxis(image,1,0), origin="lower")
-    plt.scatter(*gen_all_indexes(*values).T, facecolor="none", edgecolors="r", s=100)
-    return cost
+    res = gen_all_indexes(values[:2], values[2:4], values[4])
+    return res
 
 
 def evaluate(grid, coord, correction):
@@ -146,7 +146,7 @@ def plot_result(image, grid, coord, result, ax=None, debug=False):
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(30 // 2, 21 // 2))
     correct, correction, index = result["is_correct"], result["correction"], result["index"]
-    ax.imshow(image)
+    ax.imshow(np.moveaxis(image, 1, 0), origin="lower")
     kwargs = dict(facecolor="none", s=200)
 
     omission_sel = np.ones(correction.size, dtype=np.bool)

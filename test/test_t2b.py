@@ -1,7 +1,7 @@
 from glob import glob
-from unittest import TestCase
+from unittest import TestCase, skipIf
 
-from t2b.c_funs import likelihood, gen_index, gen_all_indexes, _likelihood
+from t2b.c_funs import likelihood, gen_index, gen_all_indexes as c_gen_all_indexes, _likelihood
 from t2b.constants import corrections
 from t2b.main import *
 from t2b.tools import rot_matrix
@@ -25,8 +25,12 @@ class Test(TestCase):
     def test_find_images_coordinates(self):
         for image in self.images:
             im = load_image(image)
-            find_image_coordinates(im)
+            coord = find_image_coordinates(im)
+            plt.imshow(np.moveaxis(im, 1, 0), origin="lower")
+            plt.scatter(*coord.T, facecolor="none", edgecolors="r", s=200)
+            pass
 
+    @skipIf(True, "Deprecated")
     def test_find_grid_coordinates(self):
         for image in self.images:
             im = load_image(image)
@@ -41,19 +45,14 @@ class Test(TestCase):
     def test_gen_index(self):
         shape = (600, 800)
         margin = 25
-        scale = (np.array(shape) - margin * 2) / Nb_dots[::-1]
+        scale = (np.array(shape) - margin * 2) / Nb_dots
         scale = scale.astype(np.uint32)
-        x, y = [np.arange(i) * s for i, s in zip(Nb_dots[::-1], scale)]
-        xy = np.array(list(product(x, y)))
-        angle = np.deg2rad(-0.5)
-        R = rot_matrix(angle)
-        xy = R.dot(xy.T).T
-        xy += np.array([margin] * 2)[None]
-        xy = xy.astype(np.uint)
+        angle = np.deg2rad(-0.6)
+        xy = gen_all_indexes([margin, margin], scale, angle)
 
         res = []
-        for i in range(x.size):
-            for ii in range(y.size):
+        for i in range(Nb_dots[0]):
+            for ii in range(Nb_dots[1]):
                 _res = gen_index(i, ii, margin, margin, scale[0], scale[1], angle)
                 res.append([_res["x"], _res["y"]])
         res = np.array(res)
@@ -74,7 +73,7 @@ class Test(TestCase):
         xy = xy.astype(np.uint)
         img[xy[:, 0], xy[:, 1]] = 1
         img = normalize(convolve2d(img, make_gaussian_kernel(10), mode="same")).astype(np.float64)
-        # indexes = gen_all_indexes(margin,margin,scale[0],scale[1],angle)
+        # indexes = c_gen_all_indexes(margin,margin,scale[0],scale[1],angle)
         # plt.imshow(img.T,origin="lower")
         # plt.scatter(*indexes.T,facecolor="none",edgecolors="r",s=200)
         cost = _likelihood(margin, margin, scale[0], scale[1], angle, img)
@@ -84,19 +83,19 @@ class Test(TestCase):
         size = np.arange(18, 25).astype(np.float64)
         shape = (start.size, start.size, size.size, size.size, angle.size)
         res = np.zeros(shape, dtype=np.float64) - 1
-        likelihood(start,start, size,size, angle, img, res.ravel())
+        likelihood(start, start, size, size, angle, img, res.ravel())
         assert res.max() == 1
         pass
 
     def test_find_grid_coordinates2(self):
-        for image in self.images:
+        images = self.images
+        for image in images:
             im = load_image(image)
             grid = find_grid_coordinates2(im)
 
-            coord = find_image_coordinates(im)
             fig, ax = plt.subplots(1, 1)
-            ax.imshow(im)
-            ax.scatter(*coord.T)
+            ax.imshow(np.moveaxis(im, 1, 0), origin="lower")
+            ax.scatter(*grid.T, facecolor="none", edgecolors="r", s=200)
             pass
 
     def test_correction(self):

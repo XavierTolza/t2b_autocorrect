@@ -2,11 +2,12 @@
 
 import click
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 
 from t2b.constants import corrections
-from t2b.main import load_image, find_image_coordinates, find_grid_coordinates, evaluate, plot_result
-import matplotlib.pyplot as plt
+from t2b.main import load_image, find_image_coordinates, evaluate, plot_result, \
+    find_grid_coordinates2
 
 
 @click.command()
@@ -21,7 +22,7 @@ def cli(input_filename, output_filename, debug=False):
 
     image = load_image(input_filename)
     coord, dots = find_image_coordinates(image, debug=True)
-    grid = find_grid_coordinates(coord)
+    grid = find_grid_coordinates2(image)
     result = evaluate(grid, coord, corrections[0] == 6)
 
     ax = plot_result(image, grid, coord, result, debug=False)
@@ -31,7 +32,7 @@ def cli(input_filename, output_filename, debug=False):
         fig, ax = plt.subplots(1, 1, figsize=(20, 15))
         ax.imshow((image * ((dots[:, :, None] * 0.5) + 0.5)).astype(np.uint8))
         ax.scatter(*coord.T, facecolor="none", edgecolors="r", s=250)
-        ax.scatter(*grid.T, marker="x", color="w",alpha=.3)
+        ax.scatter(*grid.T, marker="x", color="w", alpha=.3)
         plt.tight_layout()
         fig.savefig(output_filename.replace("corrected", "dots"))
 
