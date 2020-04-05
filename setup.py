@@ -53,6 +53,13 @@ matplotlib
 scipy
 click
 imutils""".split('\n'),
+    entry_points={
+        'console_scripts': ['t2b=t2b.cli:cli'],
+    },
+    package_data={name: ['t2b/*.txt', 't2b/*.xz', 't2b/*.so', 't2b/*.pyx']},
+    include_package_data=True,
+    data_files=['t2b/correction.txt', 't2b/motifs.tar.xz', 't2b/c_funs.cpython-37m-x86_64-linux-gnu.so',
+                't2b/c_funs.pyx'],
     **kwargs
 )
 

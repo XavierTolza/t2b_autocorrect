@@ -39,6 +39,5 @@ def cli(input_filename, output_filename, test, debug=False):
 
         # cv2.imwrite(output_filename.replace("corrected", "dots_mask"), image * dots[:, :, None])
 
-
 if __name__ == '__main__':
     cli()
