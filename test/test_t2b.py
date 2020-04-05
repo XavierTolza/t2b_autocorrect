@@ -45,6 +45,7 @@ class Test(TestCase):
         assert np.all(np.array([np.unravel_index(index, shape)])[0].T == res)
 
     def test_likelihood(self):
+        from t2b.c_funs import likelihood
         for image in self.images:
             image = load_image(image).mean(-1)
             res = likelihood(0, 0, 10, 10, 0, image)
