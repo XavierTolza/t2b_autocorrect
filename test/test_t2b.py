@@ -36,6 +36,20 @@ class Test(TestCase):
             ax.scatter(*coord.T)
             pass
 
+    def test_unravel_index(self):
+        index = np.arange(6 * 8)
+        shape = (6, 8)
+        res = np.zeros((6 * 8, 2), dtype=np.uint64)
+        for i in index:
+            unravel_index(i, shape, res[i])
+        assert np.all(np.array([np.unravel_index(index, shape)])[0].T == res)
+
+    def test_likelihood(self):
+        for image in self.images:
+            image = load_image(image).mean(-1)
+            res = likelihood(0, 0, 10, 10, 0, image)
+            pass
+
     def test_find_grid_coordinates2(self):
         for image in self.images:
             im = load_image(image)
