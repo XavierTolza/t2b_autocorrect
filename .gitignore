@@ -4,7 +4,6 @@ venv
 tmp*.py
 *_corrected.jpg
 *.cpp
-*.so
 *.html
 *.o
 build

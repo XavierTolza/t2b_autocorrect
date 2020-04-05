@@ -127,6 +127,12 @@ def find_grid_coordinates2(image):
     return res
 
 
+def filter_marked(grid, image, trigger=0.2):
+    imc = normalize(cv2.blur(gradient_norm(image.std(-1)), (10,) * 2))
+    sel = imc[grid[:, 0], grid[:, 1]]
+    return grid[sel > trigger]
+
+
 def evaluate(grid, coord, correction):
     # Find coordinates of each dot
     d = np.linalg.norm(coord[:, None] - grid[None, :], axis=-1)
@@ -153,12 +159,13 @@ def plot_result(image, grid, coord, result, ax=None, debug=False):
     omission_sel[index] = False
     ommissions = grid.reshape(-1, 2)[np.logical_and(correction.ravel(), omission_sel)]
 
-    ax.text(10, image.shape[0], f'Nombre de trouvés: {result["nombre_trouves"]}\n'
-                                f'Nombre d\'omissions: {result["nb_omissions"]}\n'
-                                f'Nombre d\'erreurs: {result["nombre_erreurs"]}\n')
+    ax.text(10, 10, f'Nombre de trouvés: {result["nombre_trouves"]}\n'
+                    f'Nombre d\'omissions: {result["nb_omissions"]}\n'
+                    f'Nombre d\'erreurs: {result["nombre_erreurs"]}\n')
     ax.scatter(*coord[~correct].T, edgecolors="r", label="Erreurs", **kwargs)
     ax.scatter(*coord[correct].T, edgecolors="g", label="Trouvés", **kwargs)
     ax.scatter(*ommissions.T, edgecolors="orange", label="Omissions", **kwargs)
+    plt.tight_layout(0, 0, 0)
 
     if debug:
         ax.scatter(*grid.T, alpha=.3, c=correction.ravel() + 0)
@@ -173,7 +180,7 @@ def load_image(filename, return_info=False):
     # im = ImageEnhance.Contrast(im).enhance(1.6)
     im = np.array(im)
     if im.shape[0] < im.shape[1]:
-        im = np.moveaxis(im, 1, 0)[::-1]
+        im = np.moveaxis(im, 1, 0)
 
     # 4 points transform
     imbw = im.mean(-1)

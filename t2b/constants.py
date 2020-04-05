@@ -11,6 +11,11 @@ corrections = corrections[:, :, ::-1]
 corrections = np.array([-1, 0, 1, 2, 3, -1, 4, 5, 6, 7])[corrections]
 corrections_bool = corrections[:, :, :, None] == np.unique(corrections.ravel())
 
+is_correct = np.array([
+    corrections[0] == 6,
+    #np.logical_or(corrections[1] == 3, corrections[1] == 4)
+])
+
 correction_old = np.array([
     [[1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1],
      [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

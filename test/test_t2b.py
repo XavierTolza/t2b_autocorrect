@@ -98,6 +98,16 @@ class Test(TestCase):
             ax.scatter(*grid.T, facecolor="none", edgecolors="r", s=200)
             pass
 
+    def test_filter_marked(self):
+        for image in self.images:
+            image = load_image(image)
+            grid = find_grid_coordinates2(image)
+            marked = filter_marked(grid, image)
+
+            plt.imshow(np.moveaxis(image, 0, 1), origin="lower")
+            plt.scatter(*marked.T, facecolor="none", edgecolors="r", s=200)
+            pass
+
     def test_correction(self):
         for image in self.images:
             image = load_image(image)
