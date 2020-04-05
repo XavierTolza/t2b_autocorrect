@@ -1,3 +1,5 @@
+from itertools import product
+
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libc.stdint cimport uint8_t, uint32_t
@@ -37,24 +39,55 @@ cpdef unravel_index(i,shape):
     c_unravel_index(i,&_s[0],&_res[0])
     return res
 
-cdef np.float64_t _likelihood(uint32_t ox,uint32_t oy,uint32_t sx,uint32_t sy,np.float64_t angle,
+cdef struct dot2d:
+    uint32_t x;
+    uint32_t y;
+
+cpdef dot2d gen_index(uint32_t xi, uint32_t yi,
+                      uint32_t ox,uint32_t oy,
+                      np.float64_t sx,np.float64_t sy,
+                      np.float64_t angle) nogil:
+    cdef dot2d res
+    cdef np.float64_t c = cos(angle)
+    cdef np.float64_t s = sin(angle)
+    cdef np.float64_t x = xi * sx
+    cdef np.float64_t y = yi * sy
+    res.x = <uint32_t> (c*x-s*y+ox)
+    res.y = <uint32_t> (s*x+c*y+oy)
+    return res
+
+cpdef gen_all_indexes(uint32_t ox,uint32_t oy,np.float64_t sx,np.float64_t sy,np.float64_t angle):
+    out = pnp.zeros((Nb_dots_t,2),dtype=pnp.uint32)
+    cdef dot2d dot
+
+    for i,(x,y) in enumerate(product(pnp.arange(Nb_dots_x,dtype=pnp.uint32),pnp.arange(Nb_dots_y,dtype=pnp.uint32))):
+        dot = gen_index(x,y,ox,oy,sx,sy,angle)
+        out[i,:] = [dot.x,dot.y]
+    return out
+
+cpdef np.float64_t _likelihood(uint32_t ox,uint32_t oy,np.float64_t sx,np.float64_t sy,np.float64_t angle,
                             np.float64_t[:,:] img) nogil:
     cdef np.float_t res = 0
-    cdef uint32_t xi,yi,ix,iy,N
+    cdef uint32_t xi,yi,N
+    cdef dot2d ixy
     for xi in range(Nb_dots_x):
         for yi in range(Nb_dots_y):
-            ix = <uint32_t> (cos(angle)*sx*xi+ox)
-            iy = <uint32_t> ((sin(angle)*sy*yi+oy))
-            if ix < img.shape[0] and iy< img.shape[1]:
-                res += img[ix,iy]
+            ixy = gen_index(xi,yi,ox,oy,sx,sy,angle)
+            if ixy.x < img.shape[0] and ixy.y< img.shape[1]:
+                res += img[ixy.x,ixy.y]
     return res/Nb_dots_t
 
 
-cpdef void likelihood(uint32_t [:] start, uint32_t[:] size, np.float64_t [:] angle,np.float64_t[:,:] img,
+cpdef void likelihood(uint32_t [:] startx,uint32_t [:] starty,
+                      np.float64_t[:] sizex,np.float64_t[:] sizey,
+                      np.float64_t [:] angle,
+                      np.float64_t[:,:] img,
                       np.float64_t[:] res) nogil:
     cdef uint32_t shape[5]
-    shape[0] = shape[1] = len(start)
-    shape[2] = shape[3] = len(size)
+    shape[0] = len(startx)
+    shape[1] = len(starty)
+    shape[2] = len(sizex)
+    shape[3] = len(sizey)
     shape[4] = len(angle)
     cdef uint32_t total = shape[0]*shape[1]*shape[2]*shape[3]*shape[4]
     cdef uint32_t i
@@ -63,5 +96,7 @@ cpdef void likelihood(uint32_t [:] start, uint32_t[:] size, np.float64_t [:] ang
     for i in prange(total,nogil=True):
         index = <uint32_t *> malloc(sizeof(uint32_t) * 5)
         c_unravel_index(i,shape,index)
-        res[i] = _likelihood(start[index[0]],start[index[1]],size[index[2]],size[index[3]],angle[index[4]],img)
+        res[i] = _likelihood(startx[index[0]],starty[index[1]],
+                             sizex[index[2]],sizey[index[3]],
+                             angle[index[4]],img)
         free(index)

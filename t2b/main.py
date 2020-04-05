@@ -8,7 +8,7 @@ from PIL import Image
 from imutils.perspective import four_point_transform
 from scipy.signal import convolve2d
 
-from t2b.c_funs import likelihood
+from t2b.c_funs import likelihood, gen_all_indexes
 from t2b.constants import Nb_dots
 from t2b.tools import charger_motifs
 
@@ -79,26 +79,52 @@ def match_filter_image(image, kernel_size=15):
     imbw = -image.max(-1).astype(np.float32)
     imbw = normalize(gradient_norm(imbw))
 
-    kernel_size = int(imbw.shape[0] * 93 / 3000)
     kernel = charger_motifs(["all"])[0]
     kernel = cv2.resize(kernel, (kernel_size, kernel_size))
 
     imm1 = convolve2d(imbw, kernel, mode="same")
-    imc = normalize(convolve2d(imm1, make_gaussian_kernel(kernel_size), mode="same"))
+    imc = normalize(cv2.blur(imm1, (kernel_size,) * 2))
     return imc
 
 
 def find_grid_coordinates2(image):
     imc = match_filter_image(image).astype(np.float64)
+    cv2.imwrite("/tmp/out.jpg", (imc * 255).astype(np.uint8))
 
-    angle = np.deg2rad(np.arange(-2, 2, 0.1)).astype(np.float64)
-    start = (np.arange(-20, 21) + np.mean([53, 67])).astype(np.uint32)
-    size = np.arange(35, 45).astype(np.uint32)
-    shape = (start.size, start.size, size.size, size.size, angle.size)
+    angle = np.deg2rad(np.arange(-1, 1, 0.1)).astype(np.float64)
+
+    shape = np.array(imc.shape[:2])
+    rect_size = np.array([
+        np.linspace(700 / 846, 800 / 846, 10),
+        np.linspace(450 / 600, 500 / 600, 10),
+    ]) * shape[:, None]
+    offset = (np.array([
+        np.linspace(30 / 846, 90 / 846, 10),
+        np.linspace(40 / 600, 100 / 600, 10),
+    ]) * shape[:, None]).astype(np.uint32)
+
+    size = (rect_size / Nb_dots[:, None]).astype(np.float64)
+    shape = (offset.shape[1], offset.shape[1], size.shape[1], size.shape[1], angle.size)
     cost = np.zeros(shape)
 
-    likelihood(start, size, angle, imc, cost.ravel())
-    pass
+    # debug
+    # a, b, c = abc = np.array([[55, 68], [771, 537], [777, 74]])
+    # angle = np.arctan2((c - a)[1], (c - a)[0])
+    # from t2b.tools import rot_matrix
+    # R = rot_matrix(-angle)
+    # a, b, c = R.dot(abc.T).T
+    # sx = 727 / 39
+    # sy = 464 / (Nb_dots[1] - 1)
+
+    likelihood(*offset, *size, angle, imc, cost.ravel())
+
+    # Find max
+    argmax = np.unravel_index(cost.ravel().argmax(), cost.shape)
+    values = np.array([i[j] for i, j in zip([offset[0], offset[1], size[0], size[1], angle], argmax)])
+
+    plt.imshow(np.moveaxis(image,1,0), origin="lower")
+    plt.scatter(*gen_all_indexes(*values).T, facecolor="none", edgecolors="r", s=100)
+    return cost
 
 
 def evaluate(grid, coord, correction):
@@ -146,13 +172,12 @@ def load_image(filename, return_info=False):
     im = Image.open(filename)
     # im = ImageEnhance.Contrast(im).enhance(1.6)
     im = np.array(im)
-    if im.shape[0] > im.shape[1]:
-        im = np.moveaxis(im, 1, 0)
-    im = im[::2][:, ::2]  # To comment!
+    if im.shape[0] < im.shape[1]:
+        im = np.moveaxis(im, 1, 0)[::-1]
 
     # 4 points transform
     imbw = im.mean(-1)
-    imbw = convolve2d(imbw, make_gaussian_kernel(im.shape[0] // 100), mode="same")
+    imbw = cv2.blur(imbw, (im.shape[1] // 100,) * 2)
     normalize(imbw)
 
     # find contours in the thresholded image
@@ -168,7 +193,7 @@ def load_image(filename, return_info=False):
 
     page = four_point_transform(im, points)
 
-    page = cv2.resize(page, (600, 846)[::-1])
+    page = cv2.resize(page, (846, 600)[::-1])
 
     if return_info:
         return page, (im, points)
