@@ -12,20 +12,8 @@ DEBUG = DEBUG is not None and DEBUG == "1"
 kwargs = {}
 name = 't2b'
 
-try:
-    from Cython.Build import cythonize
-except ImportError:
-    raise ImportError("Vous devez installer cython en premier: pip install cython")
 
-# Handle cython files
-files = listdir(name)
-r = re.compile(".+\.pyx")
-
-try:
-    cython_files = [i for i in listdir(name) if r.fullmatch(i) is not None]
-except AttributeError:
-    cython_files = [i for i in listdir(name) if r.match(i) is not None]
-if len(cython_files):
+def generate_extensions(filenames):
     extra_compile_args = ['-fopenmp']
     if DEBUG:
         extra_compile_args.append("-O0")
@@ -33,10 +21,31 @@ if len(cython_files):
                             language="c++",
                             extra_compile_args=extra_compile_args,
                             extra_link_args=['-fopenmp'])
-                  for i in cython_files]
+                  for i in filenames]
+    return extensions
 
+
+files = listdir(name)
+try:
+    from Cython.Build import cythonize
+
+    r = re.compile(".+\.pyx")
+    try:
+        cython_files = [i for i in listdir(name) if r.fullmatch(i) is not None]
+    except AttributeError:
+        cython_files = [i for i in listdir(name) if r.match(i) is not None]
+    if len(cython_files):
+        extensions = generate_extensions(cython_files)
+        kwargs.update(dict(
+            ext_modules=cythonize(extensions, annotate=True, gdb_debug=DEBUG, nthreads=cpu_count())
+        ))
+except ImportError:
+    # Cython not present, compiling C files
+    r = re.compile(".+\.c(pp)?")
+    c_files = [i for i in files if r.fullmatch(i)]
+    extensions = generate_extensions(c_files)
     kwargs.update(dict(
-        ext_modules=cythonize(extensions, annotate=True, gdb_debug=DEBUG, nthreads=cpu_count())
+        ext_modules=extensions,
     ))
 
 setup(

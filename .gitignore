@@ -3,7 +3,6 @@ venv
 .idea
 tmp*.py
 *_corrected.jpg
-*.cpp
 *.html
 *.o
 build
