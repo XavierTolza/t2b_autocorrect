@@ -6,3 +6,4 @@ tmp*.py
 *.html
 *.o
 build
+*.so
