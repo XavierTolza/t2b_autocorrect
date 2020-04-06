@@ -3,8 +3,6 @@ from os.path import abspath, dirname, join
 
 import cv2
 import numpy as np
-from t2b.constants import Nb_dots as N
-
 from PIL import Image
 
 
@@ -12,13 +10,20 @@ def rot_matrix(theta):
     return np.reshape([np.cos(-theta), np.sin(-theta), -np.sin(-theta), np.cos(-theta)], (2, 2))
 
 
+class TarError(Exception):
+    pass
+
+
 def charger_motifs(noms):
     symbols = []
     filename = join(dirname(abspath(__file__)), "motifs.tar.xz")
-    with tarfile.open(filename) as tar:
-        for i in noms:
-            im = Image.open(tar.extractfile(tar.getmember(f"{i}.png")))
-            symbols.append(np.array(im))
+    try:
+        with tarfile.open(filename) as tar:
+            for i in noms:
+                im = Image.open(tar.extractfile(tar.getmember(f"{i}.png")))
+                symbols.append(np.array(im))
+    except Exception as e:
+        raise TarError(f"Echec d'ouverture du fichier contenant les motifs :{filename}\n{str(e)}")
     symbols = np.array(symbols)[:, :, :, -1]
     return symbols
 
