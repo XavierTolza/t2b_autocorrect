@@ -75,15 +75,17 @@ def gradient_norm(im):
     return np.linalg.norm(np.gradient(im), axis=0)
 
 
-def match_filter_image(image, kernel_size=15):
+def match_filter_image(image, kernel_size=21):
     imbw = -image.max(-1).astype(np.float32)
     imbw = normalize(gradient_norm(imbw))
 
     kernel = charger_motifs(["all"])[0]
-    kernel = cv2.resize(kernel, (kernel_size, kernel_size))
+    kernel = cv2.resize(kernel, (kernel_size, kernel_size)) / 255
+    kernel = gradient_norm(kernel)
+    #imbw[40:40 + kernel_size, 40:40 + kernel_size] = kernel
 
     imm1 = convolve2d(imbw, kernel, mode="same")
-    imc = normalize(cv2.blur(imm1, (kernel_size,) * 2))
+    imc = normalize(cv2.blur(imm1, (5,) * 2))
     return imc
 
 
@@ -99,7 +101,6 @@ def gen_all_indexes(offset, scale, angle):
 
 def find_grid_coordinates2(image):
     imc = match_filter_image(image).astype(np.float64)
-    cv2.imwrite("/tmp/out.jpg", (imc * 255).astype(np.uint8))
 
     angle = np.deg2rad(np.arange(-1, 1, 0.1)).astype(np.float64)
 
