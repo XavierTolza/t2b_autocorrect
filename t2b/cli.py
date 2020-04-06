@@ -17,10 +17,6 @@ from t2b.main import load_image, find_image_coordinates, evaluate, plot_result, 
 @click.option("-t", "--test", help="Test à corriger", default=1, type=int)
 @click.option('--debug/--no-debug', default=False)
 def cli(input_filename, output_filename, test, debug=False):
-    if output_filename is None:
-        name, ext = input_filename.split(".")[0], ".".join(input_filename.split(".")[1:])
-        output_filename = f"{name}_corrected.{ext}"
-
     print("Chargement de l'image")
     image = load_image(input_filename)
     grid = find_grid_coordinates2(image)
@@ -30,9 +26,12 @@ def cli(input_filename, output_filename, test, debug=False):
     print(result)
 
     ax = plot_result(image, grid, coord, result, debug=False)
-    ax.figure.savefig(output_filename)
+    if output_filename is None:
+        plt.show()
+    else:
+        ax.figure.savefig(output_filename)
 
-    if debug:
+    if debug and output_filename is not None:
         fig, ax = plt.subplots(1, 1, figsize=(20, 15))
         ax.imshow(image)
         ax.scatter(*coord.T, facecolor="none", edgecolors="r", s=250)
