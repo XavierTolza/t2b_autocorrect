@@ -12,6 +12,15 @@ DEBUG = DEBUG is not None and DEBUG == "1"
 kwargs = {}
 name = 't2b'
 
+try:
+    import numpy
+
+    numpy_include_path = numpy.get_include()
+except ImportError:
+    import sys
+
+    numpy_include_path = join(sys.executable, "site-packages/numpy/core/include/numpy")
+
 
 def generate_extensions(filenames):
     extra_compile_args = ['-fopenmp']
@@ -20,6 +29,7 @@ def generate_extensions(filenames):
     extensions = [Extension(join(name, i.split(".")[0]).replace("/", "."), [join(name, i)],
                             language="c++",
                             extra_compile_args=extra_compile_args,
+                            include_dirs=[numpy_include_path],
                             extra_link_args=['-fopenmp'])
                   for i in filenames]
     return extensions
