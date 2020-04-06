@@ -1,0 +1,2 @@
+recursive-include t2b *.txt
+recursive-include t2b *.xz
