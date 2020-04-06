@@ -21,10 +21,13 @@ def cli(input_filename, output_filename, test, debug=False):
         name, ext = input_filename.split(".")[0], ".".join(input_filename.split(".")[1:])
         output_filename = f"{name}_corrected.{ext}"
 
+    print("Chargement de l'image")
     image = load_image(input_filename)
     grid = find_grid_coordinates2(image)
     coord = filter_marked(grid, image)
     result = evaluate(grid, coord, is_correct[test-1])
+    print("Les résultats trouvés sont les suivants:")
+    print(result)
 
     ax = plot_result(image, grid, coord, result, debug=False)
     ax.figure.savefig(output_filename)
