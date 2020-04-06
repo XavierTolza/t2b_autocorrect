@@ -2,7 +2,7 @@ from glob import glob
 from unittest import TestCase, skipIf
 
 from t2b.c_funs import likelihood, gen_index, gen_all_indexes as c_gen_all_indexes, _likelihood
-from t2b.constants import corrections
+from t2b.constants import corrections, is_correct
 from t2b.main import *
 from t2b.tools import rot_matrix
 
@@ -10,7 +10,7 @@ from t2b.tools import rot_matrix
 class Test(TestCase):
     @property
     def images(self):
-        return glob("*.jpg")
+        return glob("*/*.jpg")
 
     def test_load_image(self):
         for image in self.images:
@@ -110,10 +110,11 @@ class Test(TestCase):
 
     def test_correction(self):
         for image in self.images:
+            test = int(image[4]) - 1
             image = load_image(image)
-            coord = find_image_coordinates(image)
-            grid = find_grid_coordinates(coord)
-            result = evaluate(grid, coord, corrections[0] == 6)
+            grid = find_grid_coordinates2(image)
+            coord = filter_marked(grid, image)
+            result = evaluate(grid, coord, is_correct[test])
 
             plot_result(image, grid, coord, result, debug=False)
             pass

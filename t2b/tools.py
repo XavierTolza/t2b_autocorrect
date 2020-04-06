@@ -45,4 +45,4 @@ def generate_test_image(correction):
 if __name__ == '__main__':
     from t2b.constants import corrections
 
-    generate_test_image(corrections[0])
+    generate_test_image(corrections[1])

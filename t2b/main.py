@@ -175,7 +175,7 @@ def plot_result(image, grid, coord, result, ax=None, debug=False):
     return ax
 
 
-def load_image(filename, return_info=False):
+def load_image(filename, return_info=False, page_threshold=0.4):
     im = Image.open(filename)
     # im = ImageEnhance.Contrast(im).enhance(1.6)
     im = np.array(im)
@@ -184,14 +184,15 @@ def load_image(filename, return_info=False):
 
     # 4 points transform
     imbw = im.mean(-1)
-    imbw = cv2.blur(imbw, (im.shape[1] // 100,) * 2)
-    normalize(imbw)
+    imc = cv2.blur(imbw, (im.shape[1] // 100,) * 2)
 
     # find contours in the thresholded image
-    thresholded = (imbw > 0.5).astype(np.uint8)
+    imc = normalize(imc)
+    thresholded = (imc > page_threshold).astype(np.uint8)
     cnts = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
-    cnts = cnts[0][:, 0]
+    area = np.array([cv2.contourArea(i) for i in cnts])
+    cnts = cnts[np.argmax(area)][:, 0]
 
     # Find 4 points
     cost = np.linalg.norm((cnts / np.array(imbw.shape[::-1])[None, :])[None, :, :] -
