@@ -1,12 +1,10 @@
 #!python
 
 import click
-import cv2
 import matplotlib.pyplot as plt
-import numpy as np
 
-from t2b.constants import corrections, is_correct
-from t2b.main import load_image, find_image_coordinates, evaluate, plot_result, \
+from t2b.constants import is_correct
+from t2b.main import load_image, evaluate, plot_result, \
     find_grid_coordinates2, filter_marked
 
 
