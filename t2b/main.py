@@ -82,7 +82,7 @@ def match_filter_image(image, kernel_size=21):
     kernel = charger_motifs(["all"])[0]
     kernel = cv2.resize(kernel, (kernel_size, kernel_size)) / 255
     kernel = gradient_norm(kernel)
-    #imbw[40:40 + kernel_size, 40:40 + kernel_size] = kernel
+    # imbw[40:40 + kernel_size, 40:40 + kernel_size] = kernel
 
     imm1 = convolve2d(imbw, kernel, mode="same")
     imc = normalize(cv2.blur(imm1, (5,) * 2))
@@ -102,16 +102,18 @@ def gen_all_indexes(offset, scale, angle):
 def find_grid_coordinates2(image):
     imc = match_filter_image(image).astype(np.float64)
 
+    imc = normalize(np.array([normalize(image.std(-1)), imc]).sum(0))
+
     angle = np.deg2rad(np.arange(-1, 1, 0.1)).astype(np.float64)
 
     shape = np.array(imc.shape[:2])
     rect_size = np.array([
-        np.linspace(700 / 846, 800 / 846, 10),
-        np.linspace(450 / 600, 500 / 600, 10),
+        np.linspace(700, 800, 16) / 846,
+        np.linspace(450, 500, 16) / 600,
     ]) * shape[:, None]
     offset = (np.array([
-        np.linspace(30 / 846, 90 / 846, 15),
-        np.linspace(40 / 600, 100 / 600, 15),
+        np.linspace(50, 90, 16) / 846,
+        np.linspace(40, 84, 16) / 600,
     ]) * shape[:, None]).astype(np.uint32)
 
     size = (rect_size / Nb_dots[:, None]).astype(np.float64)
@@ -181,7 +183,7 @@ def load_image(filename, return_info=False, page_threshold=0.4):
     # im = ImageEnhance.Contrast(im).enhance(1.6)
     im = np.array(im)
     if im.shape[0] < im.shape[1]:
-        im = np.moveaxis(im, 1, 0)
+        im = np.moveaxis(im, 1, 0)[:, ::-1]
 
     # 4 points transform
     imbw = im.mean(-1)

@@ -6,11 +6,19 @@ from t2b.constants import corrections, is_correct
 from t2b.main import *
 from t2b.tools import rot_matrix
 
+expectation = {
+    'test1/IMG_20200404_151016.jpg': [16, 109, 0],
+    'test1/img2.jpeg': [125, 0, 0],
+    'test1/IMG_20200331_180245_1.jpg': [116, 9, 0],
+    'test2/IMG_20200406_220732.jpg': [4, 246, 0],
+    'test1/IMG_20200404_151016.jpg': [16, 109, 0],
+    'test2/img.jpeg': [222, 28, 0]
+}
 
 class Test(TestCase):
     @property
     def images(self):
-        return glob("*/*.jpg")
+        return glob("*/*.jp*g")
 
     def test_load_image(self):
         for image in self.images:
@@ -109,12 +117,15 @@ class Test(TestCase):
             pass
 
     def test_correction(self):
-        for image in self.images:
-            test = int(image[4]) - 1
-            image = load_image(image)
+        for filename in self.images:
+            exp = np.array(expectation[filename])
+            test = int(filename[4]) - 1
+            image = load_image(filename)
             grid = find_grid_coordinates2(image)
             coord = filter_marked(grid, image)
             result = evaluate(grid, coord, is_correct[test])
 
-            plot_result(image, grid, coord, result, debug=False)
+            res = np.array([result[i] for i in "nombre_trouves,nb_omissions,nombre_erreurs".split(",")])
+            assert np.all(res == exp)
+            # plot_result(image, grid, coord, result, debug=False)
             pass
