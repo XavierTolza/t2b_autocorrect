@@ -1,27 +1,29 @@
 #!python
 
 import click
-import cv2
 import matplotlib.pyplot as plt
-import numpy as np
 
-from t2b.constants import corrections, is_correct
-from t2b.main import load_image, find_image_coordinates, evaluate, plot_result, \
+from t2b.constants import is_correct
+from t2b.main import load_image, evaluate, plot_result, \
     find_grid_coordinates2, filter_marked
 
 
-@click.command()
+@click.group()
+def cli():
+    pass
+
+@cli.command()
 @click.argument("input_filename",
                 type=click.Path(True, True, False, readable=True, resolve_path=True))
 @click.option("-o", "--output_filename", help="Nom du fichier image de sortie", default=None)
 @click.option("-t", "--test", help="Test à corriger", default=1, type=int)
 @click.option('--debug/--no-debug', default=False)
-def cli(input_filename, output_filename, test, debug=False):
+def correct(input_filename, output_filename, test, debug=False):
     print("Chargement de l'image")
     image = load_image(input_filename)
     grid = find_grid_coordinates2(image)
     coord = filter_marked(grid, image)
-    result = evaluate(grid, coord, is_correct[test-1])
+    result = evaluate(grid, coord, is_correct[test - 1])
     print("Les résultats trouvés sont les suivants:")
     print(result)
 
@@ -40,6 +42,13 @@ def cli(input_filename, output_filename, test, debug=False):
         fig.savefig(output_filename.replace("corrected", "dots"))
 
         # cv2.imwrite(output_filename.replace("corrected", "dots_mask"), image * dots[:, :, None])
+
+
+@cli.command()
+def server():
+    from t2b.server import app
+    app.run()
+
 
 if __name__ == '__main__':
     cli()
