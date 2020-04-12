@@ -1,12 +1,9 @@
 import lzma
 from base64 import b64encode, b64decode
-from io import BytesIO
-
-import numpy as np
-from PIL import Image
 
 from t2b.constants import current_version, is_correct
 from t2b.main import *
+from t2b.tools import image_from_bytes
 
 
 def make_packet(img_path, test_id, id=None, token=None):
@@ -22,7 +19,7 @@ def lambda_handler(event, context=None):
         img = b64decode(img)
         if compressed:
             img = lzma.decompress(img)
-        img = Image.open(BytesIO(img))
+        img = image_from_bytes(img)
         img = np.array(img)
 
         im = load_image(img)

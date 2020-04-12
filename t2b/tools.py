@@ -1,9 +1,9 @@
 import tarfile
+from io import BytesIO
 from os.path import abspath, dirname, join
 
 import cv2
 import numpy as np
-from PIL import Image
 
 
 def rot_matrix(theta):
@@ -14,13 +14,19 @@ class TarError(Exception):
     pass
 
 
+def image_from_bytes(data, flag=-1):
+    nparr = np.frombuffer(data, np.uint8)
+    return cv2.imdecode(nparr, flags=flag)
+
+
 def charger_motifs(noms):
     symbols = []
     filename = join(dirname(abspath(__file__)), "motifs.tar.xz")
     try:
         with tarfile.open(filename) as tar:
             for i in noms:
-                im = Image.open(tar.extractfile(tar.getmember(f"{i}.png")))
+                im = tar.extractfile(tar.getmember(f"{i}.png")).read()
+                im = image_from_bytes(im)
                 symbols.append(np.array(im))
     except Exception as e:
         raise TarError(f"Echec d'ouverture du fichier contenant les motifs :{filename}\n{str(e)}")

@@ -1,19 +1,16 @@
 from itertools import product
 
 import cv2
-import imutils as imutils
-import matplotlib.pyplot as plt
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
 import numpy as np
-from PIL import Image
-from imutils.perspective import four_point_transform
-from scipy.signal import convolve2d
 
 from t2b.c_funs import likelihood, gen_all_indexes
 from t2b.constants import Nb_dots
 from t2b.tools import charger_motifs, rot_matrix
-
-
-# from t2b.c_funs import likelihood
 
 
 def make_gaussian_kernel(kernel_size, sigma=5):
@@ -75,6 +72,10 @@ def gradient_norm(im):
     return np.linalg.norm(np.gradient(im), axis=0)
 
 
+def convolve2d(im, kernel, mode="same"):
+    return cv2.filter2D(im, -1, kernel)
+
+
 def match_filter_image(image, kernel_size=21):
     imbw = -image.max(-1).astype(np.float32)
     imbw = normalize(gradient_norm(imbw))
@@ -82,7 +83,6 @@ def match_filter_image(image, kernel_size=21):
     kernel = charger_motifs(["all"])[0]
     kernel = cv2.resize(kernel, (kernel_size, kernel_size)) / 255
     kernel = gradient_norm(kernel)
-    # imbw[40:40 + kernel_size, 40:40 + kernel_size] = kernel
 
     imm1 = convolve2d(imbw, kernel, mode="same")
     imc = normalize(cv2.blur(imm1, (5,) * 2))
@@ -182,9 +182,21 @@ def plot_result(image, grid, coord, result, ax=None, debug=False):
     return ax
 
 
+def four_point_transform(im, points):
+    maxWidth, maxHeight = im.shape[:2][::-1]
+    dst = np.array([
+        [0, 0],
+        [maxWidth - 1, 0],
+        [maxWidth - 1, maxHeight - 1],
+        [0, maxHeight - 1]], dtype="float32")
+    M = cv2.getPerspectiveTransform(points.astype("float32"), dst)
+    warped = cv2.warpPerspective(im, M, (maxWidth, maxHeight))
+    return warped
+
+
 def load_image(filename, return_info=False, page_threshold=0.4):
     if type(filename) == str:
-        im = Image.open(filename)
+        im = cv2.imread(filename)
         # im = ImageEnhance.Contrast(im).enhance(1.6)
     else:
         im = filename
@@ -200,7 +212,7 @@ def load_image(filename, return_info=False, page_threshold=0.4):
     imc = normalize(imc)
     thresholded = (imc > page_threshold).astype(np.uint8)
     cnts = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = imutils.grab_contours(cnts)
+    cnts = cnts[0]
     area = np.array([cv2.contourArea(i) for i in cnts])
     cnts = cnts[np.argmax(area)][:, 0]
 

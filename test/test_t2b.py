@@ -1,9 +1,10 @@
+import re
 from glob import glob
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, relpath
 from unittest import TestCase, skipIf
 
-from t2b.c_funs import likelihood, gen_index, gen_all_indexes as c_gen_all_indexes, _likelihood
-from t2b.constants import corrections, is_correct
+from t2b.c_funs import gen_index, _likelihood
+from t2b.constants import is_correct
 from t2b.main import *
 from t2b.tools import rot_matrix
 
@@ -123,8 +124,8 @@ class Test(TestCase, GeneralTest):
 
     def test_correction(self):
         for filename in self.images:
-            exp = np.array(expectation[filename])
-            test = int(filename[4]) - 1
+            exp = np.array(expectation[relpath(filename)])
+            test = int(re.match(".+test(\d).+", filename).groups()[0]) - 1
             image = load_image(filename)
             grid = find_grid_coordinates2(image)
             coord = filter_marked(grid, image)
