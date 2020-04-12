@@ -7,3 +7,5 @@ tmp*.py
 *.o
 build
 *.so
+dist
+*.egg-info

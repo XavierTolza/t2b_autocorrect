@@ -10,7 +10,7 @@ from t2b.main import *
 
 
 def make_packet(img_path, test_id, id=None, token=None):
-    return dict(img=b64encode(open(img_path, "rb").read()), token=token, id=id, version=current_version,
+    return dict(img=b64encode(open(img_path, "rb").read()).decode("utf-8"), token=token, id=id, version=current_version,
                 test_id=test_id, compressed=False)
 
 
