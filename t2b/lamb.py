@@ -1,4 +1,5 @@
 import lzma
+from argparse import ArgumentParser
 from base64 import b64encode, b64decode
 
 from t2b.constants import current_version, is_correct
@@ -36,8 +37,19 @@ def lambda_handler(event, context=None):
             msg="OK"
         ))
     except Exception as e:
+        # raise
         res["msg"] = str(e)
         res["error_type"] = e.__class__.__name__
         return res
     res["success"] = True
     return res
+
+
+if __name__ == '__main__':
+    # Simple runtime test
+    parser = ArgumentParser()
+    parser.add_argument("img_path")
+    parser.add_argument("test_id",type=int)
+
+    packet = make_packet(**parser.parse_args().__dict__)
+    print(lambda_handler(packet))
