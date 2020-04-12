@@ -26,6 +26,7 @@ def lambda_handler(event, context=None):
         im = load_image(img)
         grid = find_grid_coordinates2(im)
         coord_selector = marked_selector(grid, im)
+        coord_selector = np.arange(coord_selector.size)[coord_selector]
 
         result = evaluate(grid, grid[coord_selector], is_correct[test_id - 1])
         res.update(dict(
