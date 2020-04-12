@@ -1,4 +1,5 @@
 from glob import glob
+from os.path import abspath, dirname, join
 from unittest import TestCase, skipIf
 
 from t2b.c_funs import likelihood, gen_index, gen_all_indexes as c_gen_all_indexes, _likelihood
@@ -15,11 +16,15 @@ expectation = {
     'test2/img.jpeg': [222, 28, 0]
 }
 
-class Test(TestCase):
+
+class GeneralTest(object):
     @property
     def images(self):
-        return glob("*/*.jp*g")
+        path = join(dirname(abspath(__file__)), "*/*.jp*g")
+        return glob(path)
 
+
+class Test(TestCase, GeneralTest):
     def test_load_image(self):
         for image in self.images:
             im, (image, points) = load_image(image, return_info=True)

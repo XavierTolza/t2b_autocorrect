@@ -130,10 +130,14 @@ def find_grid_coordinates2(image):
     return res
 
 
-def filter_marked(grid, image, trigger=0.2):
+def marked_selector(grid, image, trigger=0.2):
     imc = normalize(cv2.blur(gradient_norm(image.std(-1)), (10,) * 2))
     sel = imc[grid[:, 0], grid[:, 1]]
-    return grid[sel > trigger]
+    return sel > trigger
+
+
+def filter_marked(grid, image, trigger=0.2):
+    return grid[marked_selector(grid, image, trigger)]
 
 
 def evaluate(grid, coord, correction):
@@ -179,8 +183,11 @@ def plot_result(image, grid, coord, result, ax=None, debug=False):
 
 
 def load_image(filename, return_info=False, page_threshold=0.4):
-    im = Image.open(filename)
-    # im = ImageEnhance.Contrast(im).enhance(1.6)
+    if type(filename) == str:
+        im = Image.open(filename)
+        # im = ImageEnhance.Contrast(im).enhance(1.6)
+    else:
+        im = filename
     im = np.array(im)
     if im.shape[0] < im.shape[1]:
         im = np.moveaxis(im, 1, 0)[:, ::-1]

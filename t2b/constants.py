@@ -13,3 +13,4 @@ is_correct = np.array([
     corrections[0] == 6,
     np.logical_or(corrections[1] == 2, corrections[1] == 3)
 ])
+current_version = 1.0
