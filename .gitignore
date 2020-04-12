@@ -9,3 +9,4 @@ build
 *.so
 dist
 *.egg-info
+cython_debug

@@ -8,6 +8,8 @@ from distutils.extension import Extension
 
 DEBUG = os.environ.get("DEBUG")
 DEBUG = DEBUG is not None and DEBUG == "1"
+if DEBUG:
+    print("Debug enabled")
 
 kwargs = {}
 name = 't2b'

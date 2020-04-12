@@ -135,3 +135,18 @@ class Test(TestCase, GeneralTest):
             assert np.all(res == exp)
             # plot_result(image, grid, coord, result, debug=False)
             pass
+
+    def test_line_likelihood(self):
+        from t2b.c_funs import line_likelihood, c_line_likelihood
+        im = np.zeros((100, 100))
+        im[40, :] = 1
+        imr = rotate_image(im, -45)
+        angle = np.deg2rad(np.arange(-90, 90))
+        radius = np.arange(100)
+
+        a, r = [i.ravel() for i in np.meshgrid(angle, radius)]
+
+        for i, j in zip(a, r):
+            res = c_line_likelihood(i, j, imr)
+        cost = line_likelihood(a, r, imr)
+        pass

@@ -76,7 +76,7 @@ def convolve2d(im, kernel, mode="same"):
     return cv2.filter2D(im, -1, kernel)
 
 
-def match_filter_image(image, kernel_size=21):
+def match_filter_image(image, kernel_size=21, blur_size=5):
     imbw = -image.max(-1).astype(np.float32)
     imbw = normalize(gradient_norm(imbw))
 
@@ -85,7 +85,7 @@ def match_filter_image(image, kernel_size=21):
     kernel = gradient_norm(kernel)
 
     imm1 = convolve2d(imbw, kernel, mode="same")
-    imc = normalize(cv2.blur(imm1, (5,) * 2))
+    imc = normalize(cv2.blur(imm1, (blur_size,) * 2))
     return imc
 
 
