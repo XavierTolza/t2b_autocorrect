@@ -137,16 +137,18 @@ class Test(TestCase, GeneralTest):
             pass
 
     def test_line_likelihood(self):
-        from t2b.c_funs import line_likelihood, c_line_likelihood
+        from t2b.c_funs import line_likelihood
         im = np.zeros((100, 100))
         im[40, :] = 1
         imr = rotate_image(im, -45)
-        angle = np.deg2rad(np.arange(-90, 90))
-        radius = np.arange(100)
+        angle = np.deg2rad(np.arange(-180, 180))
+        radius = np.arange(int(100 * np.sqrt(2)))
 
-        a, r = [i.ravel() for i in np.meshgrid(angle, radius)]
+        a, r = [i.T.ravel() for i in np.meshgrid(angle, radius)]
 
-        for i, j in zip(a, r):
-            res = c_line_likelihood(i, j, imr)
-        cost = line_likelihood(a, r, imr)
+        cost = line_likelihood(a, r, imr).reshape(angle.size, radius.size)
+        plt.imshow(cost)
+        argmax = np.unravel_index(np.argmax(cost.ravel()), cost.shape)
+        max = [i[j] for i, j in zip([angle, radius], argmax)]
+        max[0] = np.rad2deg(max[0])
         pass

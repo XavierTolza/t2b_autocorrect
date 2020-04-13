@@ -1257,7 +1257,7 @@ struct __pyx_t_3t2b_6c_funs_dot2d {
   uint32_t y;
 };
 
-/* "t2b/c_funs.pyx":180
+/* "t2b/c_funs.pyx":183
  *         out[i] = c_line_likelihood(angle[i],radius[i],img)
  * 
  * cpdef line_likelihood(angle,radius,img,transform_angle_radius=True):             # <<<<<<<<<<<<<<
@@ -4679,7 +4679,7 @@ static bool __pyx_f_3t2b_6c_funs_c_point_is_in_image(__pyx_t_5numpy_float64_t __
  * 
  * cdef void c_line_find_coordinates(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img, np.float64_t* out)nogil:             # <<<<<<<<<<<<<<
  *     cdef uint32_t xmax = img.shape[0]
- *     cdef uint32_t ymax = img.shape[0]
+ *     cdef uint32_t ymax = img.shape[1]
  */
 
 static void __pyx_f_3t2b_6c_funs_c_line_find_coordinates(__pyx_t_5numpy_float64_t __pyx_v_angle, __pyx_t_5numpy_float64_t __pyx_v_radius, __Pyx_memviewslice __pyx_v_img, __pyx_t_5numpy_float64_t *__pyx_v_out) {
@@ -4704,7 +4704,7 @@ static void __pyx_f_3t2b_6c_funs_c_line_find_coordinates(__pyx_t_5numpy_float64_
  * 
  * cdef void c_line_find_coordinates(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img, np.float64_t* out)nogil:
  *     cdef uint32_t xmax = img.shape[0]             # <<<<<<<<<<<<<<
- *     cdef uint32_t ymax = img.shape[0]
+ *     cdef uint32_t ymax = img.shape[1]
  *     cdef np.float64_t x1,y1,x2,y2,s,c
  */
   __pyx_v_xmax = (__pyx_v_img.shape[0]);
@@ -4712,14 +4712,14 @@ static void __pyx_f_3t2b_6c_funs_c_line_find_coordinates(__pyx_t_5numpy_float64_
   /* "t2b/c_funs.pyx":111
  * cdef void c_line_find_coordinates(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img, np.float64_t* out)nogil:
  *     cdef uint32_t xmax = img.shape[0]
- *     cdef uint32_t ymax = img.shape[0]             # <<<<<<<<<<<<<<
+ *     cdef uint32_t ymax = img.shape[1]             # <<<<<<<<<<<<<<
  *     cdef np.float64_t x1,y1,x2,y2,s,c
  *     s = sin(angle)
  */
-  __pyx_v_ymax = (__pyx_v_img.shape[0]);
+  __pyx_v_ymax = (__pyx_v_img.shape[1]);
 
   /* "t2b/c_funs.pyx":113
- *     cdef uint32_t ymax = img.shape[0]
+ *     cdef uint32_t ymax = img.shape[1]
  *     cdef np.float64_t x1,y1,x2,y2,s,c
  *     s = sin(angle)             # <<<<<<<<<<<<<<
  *     c=cos(angle)
@@ -5070,7 +5070,7 @@ static void __pyx_f_3t2b_6c_funs_c_line_find_coordinates(__pyx_t_5numpy_float64_
  * 
  * cdef void c_line_find_coordinates(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img, np.float64_t* out)nogil:             # <<<<<<<<<<<<<<
  *     cdef uint32_t xmax = img.shape[0]
- *     cdef uint32_t ymax = img.shape[0]
+ *     cdef uint32_t ymax = img.shape[1]
  */
 
   /* function exit code */
@@ -5178,7 +5178,7 @@ static PyObject *__pyx_f_3t2b_6c_funs_line_find_coordinates(__pyx_t_5numpy_float
  *     c_line_find_coordinates(angle,radius,img,_res)
  *     return res             # <<<<<<<<<<<<<<
  * 
- * cdef np.float64_t c_line_likelihood(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img)nogil:
+ * cdef np.float64_t c_line_likelihood(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img) nogil:
  */
   __Pyx_XDECREF(__pyx_r);
   __Pyx_INCREF(__pyx_v_res);
@@ -5309,7 +5309,7 @@ static PyObject *__pyx_pf_3t2b_6c_funs_10line_find_coordinates(CYTHON_UNUSED PyO
 /* "t2b/c_funs.pyx":150
  *     return res
  * 
- * cdef np.float64_t c_line_likelihood(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img)nogil:             # <<<<<<<<<<<<<<
+ * cdef np.float64_t c_line_likelihood(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img) nogil:             # <<<<<<<<<<<<<<
  *     # On trouve les points d'intersection
  *     cdef np.float64_t* coord = [0,0,0,0]
  */
@@ -5325,6 +5325,8 @@ static __pyx_t_5numpy_float64_t __pyx_f_3t2b_6c_funs_c_line_likelihood(__pyx_t_5
   uint32_t __pyx_v_x;
   uint32_t __pyx_v_y;
   __pyx_t_5numpy_float64_t __pyx_v_result;
+  uint32_t __pyx_v_xmax;
+  uint32_t __pyx_v_ymax;
   long __pyx_v_k;
   __pyx_t_5numpy_float64_t __pyx_r;
   __pyx_t_5numpy_float64_t __pyx_t_1[4];
@@ -5336,12 +5338,13 @@ static __pyx_t_5numpy_float64_t __pyx_f_3t2b_6c_funs_c_line_likelihood(__pyx_t_5
   uint32_t __pyx_t_7;
   uint32_t __pyx_t_8;
   long __pyx_t_9;
-  size_t __pyx_t_10;
+  int __pyx_t_10;
   size_t __pyx_t_11;
-  int __pyx_t_12;
+  size_t __pyx_t_12;
+  int __pyx_t_13;
 
   /* "t2b/c_funs.pyx":152
- * cdef np.float64_t c_line_likelihood(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img)nogil:
+ * cdef np.float64_t c_line_likelihood(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img) nogil:
  *     # On trouve les points d'intersection
  *     cdef np.float64_t* coord = [0,0,0,0]             # <<<<<<<<<<<<<<
  *     c_line_find_coordinates(angle,radius,img,coord)
@@ -5367,7 +5370,7 @@ static __pyx_t_5numpy_float64_t __pyx_f_3t2b_6c_funs_c_line_likelihood(__pyx_t_5
  *     cdef uint32_t distance,x,y
  *     x1,y1,x2,y2 = coord[0],coord[1],coord[2],coord[3]             # <<<<<<<<<<<<<<
  *     cdef np.float64_t result=0
- * 
+ *     cdef uint32_t xmax = img.shape[0]
  */
   __pyx_t_2 = (__pyx_v_coord[0]);
   __pyx_t_3 = (__pyx_v_coord[1]);
@@ -5382,23 +5385,41 @@ static __pyx_t_5numpy_float64_t __pyx_f_3t2b_6c_funs_c_line_likelihood(__pyx_t_5
  *     cdef uint32_t distance,x,y
  *     x1,y1,x2,y2 = coord[0],coord[1],coord[2],coord[3]
  *     cdef np.float64_t result=0             # <<<<<<<<<<<<<<
- * 
- *     distance = <uint32_t>(sqrt(((x2-x1)**2+(y2-y1)**2)/2.0))
+ *     cdef uint32_t xmax = img.shape[0]
+ *     cdef uint32_t ymax = img.shape[1]
  */
   __pyx_v_result = 0.0;
 
+  /* "t2b/c_funs.pyx":158
+ *     x1,y1,x2,y2 = coord[0],coord[1],coord[2],coord[3]
+ *     cdef np.float64_t result=0
+ *     cdef uint32_t xmax = img.shape[0]             # <<<<<<<<<<<<<<
+ *     cdef uint32_t ymax = img.shape[1]
+ * 
+ */
+  __pyx_v_xmax = (__pyx_v_img.shape[0]);
+
   /* "t2b/c_funs.pyx":159
  *     cdef np.float64_t result=0
+ *     cdef uint32_t xmax = img.shape[0]
+ *     cdef uint32_t ymax = img.shape[1]             # <<<<<<<<<<<<<<
+ * 
+ *     distance = <uint32_t>(sqrt(((x2-x1)**2+(y2-y1)**2)/2.0))
+ */
+  __pyx_v_ymax = (__pyx_v_img.shape[1]);
+
+  /* "t2b/c_funs.pyx":161
+ *     cdef uint32_t ymax = img.shape[1]
  * 
  *     distance = <uint32_t>(sqrt(((x2-x1)**2+(y2-y1)**2)/2.0))             # <<<<<<<<<<<<<<
- *     distance = distance
  *     if distance>10:
+ *         # On a les coordonnes de la ligne, on peut slectionner les points intermdiaires
  */
   __pyx_v_distance = ((uint32_t)sqrt(((pow((__pyx_v_x2 - __pyx_v_x1), 2.0) + pow((__pyx_v_y2 - __pyx_v_y1), 2.0)) / 2.0)));
 
-  /* "t2b/c_funs.pyx":161
+  /* "t2b/c_funs.pyx":162
+ * 
  *     distance = <uint32_t>(sqrt(((x2-x1)**2+(y2-y1)**2)/2.0))
- *     distance = distance
  *     if distance>10:             # <<<<<<<<<<<<<<
  *         # On a les coordonnes de la ligne, on peut slectionner les points intermdiaires
  *         for k in range(1,distance):
@@ -5406,7 +5427,7 @@ static __pyx_t_5numpy_float64_t __pyx_f_3t2b_6c_funs_c_line_likelihood(__pyx_t_5
   __pyx_t_6 = ((__pyx_v_distance > 10) != 0);
   if (__pyx_t_6) {
 
-    /* "t2b/c_funs.pyx":163
+    /* "t2b/c_funs.pyx":164
  *     if distance>10:
  *         # On a les coordonnes de la ligne, on peut slectionner les points intermdiaires
  *         for k in range(1,distance):             # <<<<<<<<<<<<<<
@@ -5418,7 +5439,7 @@ static __pyx_t_5numpy_float64_t __pyx_f_3t2b_6c_funs_c_line_likelihood(__pyx_t_5
     for (__pyx_t_9 = 1; __pyx_t_9 < __pyx_t_8; __pyx_t_9+=1) {
       __pyx_v_k = __pyx_t_9;
 
-      /* "t2b/c_funs.pyx":164
+      /* "t2b/c_funs.pyx":165
  *         # On a les coordonnes de la ligne, on peut slectionner les points intermdiaires
  *         for k in range(1,distance):
  *             ratio = (<np.float64_t>k)/<np.float64_t>(distance)             # <<<<<<<<<<<<<<
@@ -5433,11 +5454,11 @@ static __pyx_t_5numpy_float64_t __pyx_f_3t2b_6c_funs_c_line_likelihood(__pyx_t_5
         #ifdef WITH_THREAD
         __Pyx_PyGILState_Release(__pyx_gilstate_save);
         #endif
-        __PYX_ERR(0, 164, __pyx_L1_error)
+        __PYX_ERR(0, 165, __pyx_L1_error)
       }
       __pyx_v_ratio = (((__pyx_t_5numpy_float64_t)__pyx_v_k) / ((__pyx_t_5numpy_float64_t)__pyx_v_distance));
 
-      /* "t2b/c_funs.pyx":165
+      /* "t2b/c_funs.pyx":166
  *         for k in range(1,distance):
  *             ratio = (<np.float64_t>k)/<np.float64_t>(distance)
  *             x = <uint32_t>(x2*ratio+(1-ratio)*x1)             # <<<<<<<<<<<<<<
@@ -5446,78 +5467,105 @@ static __pyx_t_5numpy_float64_t __pyx_f_3t2b_6c_funs_c_line_likelihood(__pyx_t_5
  */
       __pyx_v_x = ((uint32_t)((__pyx_v_x2 * __pyx_v_ratio) + ((1.0 - __pyx_v_ratio) * __pyx_v_x1)));
 
-      /* "t2b/c_funs.pyx":166
+      /* "t2b/c_funs.pyx":167
  *             ratio = (<np.float64_t>k)/<np.float64_t>(distance)
  *             x = <uint32_t>(x2*ratio+(1-ratio)*x1)
  *             y = <uint32_t>(y2*ratio+(1-ratio)*y1)             # <<<<<<<<<<<<<<
  *             # print(([angle,radius],k,[x1,y1],[x2,y2],[x,y],result))
- *             result += img[x,y]/<np.float64_t>(distance)
+ *             if x < xmax and y < ymax:
  */
       __pyx_v_y = ((uint32_t)((__pyx_v_y2 * __pyx_v_ratio) + ((1.0 - __pyx_v_ratio) * __pyx_v_y1)));
 
-      /* "t2b/c_funs.pyx":168
+      /* "t2b/c_funs.pyx":169
  *             y = <uint32_t>(y2*ratio+(1-ratio)*y1)
  *             # print(([angle,radius],k,[x1,y1],[x2,y2],[x,y],result))
- *             result += img[x,y]/<np.float64_t>(distance)             # <<<<<<<<<<<<<<
+ *             if x < xmax and y < ymax:             # <<<<<<<<<<<<<<
+ *                 result += img[x,y]/<np.float64_t>(distance)
+ *         return result
+ */
+      __pyx_t_10 = ((__pyx_v_x < __pyx_v_xmax) != 0);
+      if (__pyx_t_10) {
+      } else {
+        __pyx_t_6 = __pyx_t_10;
+        goto __pyx_L7_bool_binop_done;
+      }
+      __pyx_t_10 = ((__pyx_v_y < __pyx_v_ymax) != 0);
+      __pyx_t_6 = __pyx_t_10;
+      __pyx_L7_bool_binop_done:;
+      if (__pyx_t_6) {
+
+        /* "t2b/c_funs.pyx":170
+ *             # print(([angle,radius],k,[x1,y1],[x2,y2],[x,y],result))
+ *             if x < xmax and y < ymax:
+ *                 result += img[x,y]/<np.float64_t>(distance)             # <<<<<<<<<<<<<<
  *         return result
  * 
  */
-      __pyx_t_10 = __pyx_v_x;
-      __pyx_t_11 = __pyx_v_y;
-      __pyx_t_12 = -1;
-      if (unlikely(__pyx_t_10 >= (size_t)__pyx_v_img.shape[0])) __pyx_t_12 = 0;
-      if (unlikely(__pyx_t_11 >= (size_t)__pyx_v_img.shape[1])) __pyx_t_12 = 1;
-      if (unlikely(__pyx_t_12 != -1)) {
-        __Pyx_RaiseBufferIndexErrorNogil(__pyx_t_12);
-        __PYX_ERR(0, 168, __pyx_L1_error)
+        __pyx_t_11 = __pyx_v_x;
+        __pyx_t_12 = __pyx_v_y;
+        __pyx_t_13 = -1;
+        if (unlikely(__pyx_t_11 >= (size_t)__pyx_v_img.shape[0])) __pyx_t_13 = 0;
+        if (unlikely(__pyx_t_12 >= (size_t)__pyx_v_img.shape[1])) __pyx_t_13 = 1;
+        if (unlikely(__pyx_t_13 != -1)) {
+          __Pyx_RaiseBufferIndexErrorNogil(__pyx_t_13);
+          __PYX_ERR(0, 170, __pyx_L1_error)
+        }
+        __pyx_t_5 = (*((__pyx_t_5numpy_float64_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_img.data + __pyx_t_11 * __pyx_v_img.strides[0]) ) + __pyx_t_12 * __pyx_v_img.strides[1]) )));
+        if (unlikely(((__pyx_t_5numpy_float64_t)__pyx_v_distance) == 0)) {
+          #ifdef WITH_THREAD
+          PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+          #endif
+          PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+          #ifdef WITH_THREAD
+          __Pyx_PyGILState_Release(__pyx_gilstate_save);
+          #endif
+          __PYX_ERR(0, 170, __pyx_L1_error)
+        }
+        __pyx_v_result = (__pyx_v_result + (__pyx_t_5 / ((__pyx_t_5numpy_float64_t)__pyx_v_distance)));
+
+        /* "t2b/c_funs.pyx":169
+ *             y = <uint32_t>(y2*ratio+(1-ratio)*y1)
+ *             # print(([angle,radius],k,[x1,y1],[x2,y2],[x,y],result))
+ *             if x < xmax and y < ymax:             # <<<<<<<<<<<<<<
+ *                 result += img[x,y]/<np.float64_t>(distance)
+ *         return result
+ */
       }
-      __pyx_t_5 = (*((__pyx_t_5numpy_float64_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_img.data + __pyx_t_10 * __pyx_v_img.strides[0]) ) + __pyx_t_11 * __pyx_v_img.strides[1]) )));
-      if (unlikely(((__pyx_t_5numpy_float64_t)__pyx_v_distance) == 0)) {
-        #ifdef WITH_THREAD
-        PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
-        #endif
-        PyErr_SetString(PyExc_ZeroDivisionError, "float division");
-        #ifdef WITH_THREAD
-        __Pyx_PyGILState_Release(__pyx_gilstate_save);
-        #endif
-        __PYX_ERR(0, 168, __pyx_L1_error)
-      }
-      __pyx_v_result = (__pyx_v_result + (__pyx_t_5 / ((__pyx_t_5numpy_float64_t)__pyx_v_distance)));
     }
 
-    /* "t2b/c_funs.pyx":169
- *             # print(([angle,radius],k,[x1,y1],[x2,y2],[x,y],result))
- *             result += img[x,y]/<np.float64_t>(distance)
+    /* "t2b/c_funs.pyx":171
+ *             if x < xmax and y < ymax:
+ *                 result += img[x,y]/<np.float64_t>(distance)
  *         return result             # <<<<<<<<<<<<<<
  * 
- *     return -1
+ *     return 0
  */
     __pyx_r = __pyx_v_result;
     goto __pyx_L0;
 
-    /* "t2b/c_funs.pyx":161
+    /* "t2b/c_funs.pyx":162
+ * 
  *     distance = <uint32_t>(sqrt(((x2-x1)**2+(y2-y1)**2)/2.0))
- *     distance = distance
  *     if distance>10:             # <<<<<<<<<<<<<<
  *         # On a les coordonnes de la ligne, on peut slectionner les points intermdiaires
  *         for k in range(1,distance):
  */
   }
 
-  /* "t2b/c_funs.pyx":171
+  /* "t2b/c_funs.pyx":173
  *         return result
  * 
- *     return -1             # <<<<<<<<<<<<<<
+ *     return 0             # <<<<<<<<<<<<<<
  * 
  * cdef void c_multi_line_likelihood(np.float64_t[:] angle,np.float64_t[:] radius, np.float64_t[:,:] img, np.float64_t[:] out)nogil:
  */
-  __pyx_r = -1.0;
+  __pyx_r = 0.0;
   goto __pyx_L0;
 
   /* "t2b/c_funs.pyx":150
  *     return res
  * 
- * cdef np.float64_t c_line_likelihood(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img)nogil:             # <<<<<<<<<<<<<<
+ * cdef np.float64_t c_line_likelihood(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img) nogil:             # <<<<<<<<<<<<<<
  *     # On trouve les points d'intersection
  *     cdef np.float64_t* coord = [0,0,0,0]
  */
@@ -5530,8 +5578,8 @@ static __pyx_t_5numpy_float64_t __pyx_f_3t2b_6c_funs_c_line_likelihood(__pyx_t_5
   return __pyx_r;
 }
 
-/* "t2b/c_funs.pyx":173
- *     return -1
+/* "t2b/c_funs.pyx":175
+ *     return 0
  * 
  * cdef void c_multi_line_likelihood(np.float64_t[:] angle,np.float64_t[:] radius, np.float64_t[:,:] img, np.float64_t[:] out)nogil:             # <<<<<<<<<<<<<<
  *     cdef uint32_t total=angle.shape[0]
@@ -5549,7 +5597,7 @@ static void __pyx_f_3t2b_6c_funs_c_multi_line_likelihood(__Pyx_memviewslice __py
   size_t __pyx_t_6;
   size_t __pyx_t_7;
 
-  /* "t2b/c_funs.pyx":174
+  /* "t2b/c_funs.pyx":176
  * 
  * cdef void c_multi_line_likelihood(np.float64_t[:] angle,np.float64_t[:] radius, np.float64_t[:,:] img, np.float64_t[:] out)nogil:
  *     cdef uint32_t total=angle.shape[0]             # <<<<<<<<<<<<<<
@@ -5558,9 +5606,9 @@ static void __pyx_f_3t2b_6c_funs_c_multi_line_likelihood(__Pyx_memviewslice __py
  */
   __pyx_v_total = (__pyx_v_angle.shape[0]);
 
-  /* "t2b/c_funs.pyx":177
- *     cdef uint32_t i
+  /* "t2b/c_funs.pyx":180
  * 
+ *     # for i in range(total):
  *     for i in prange(total,nogil=True):             # <<<<<<<<<<<<<<
  *         out[i] = c_line_likelihood(angle[i],radius[i],img)
  * 
@@ -5607,8 +5655,8 @@ static void __pyx_f_3t2b_6c_funs_c_multi_line_likelihood(__Pyx_memviewslice __py
                         {
                             __pyx_v_i = (uint32_t)(0 + 1 * __pyx_t_2);
 
-                            /* "t2b/c_funs.pyx":178
- * 
+                            /* "t2b/c_funs.pyx":181
+ *     # for i in range(total):
  *     for i in prange(total,nogil=True):
  *         out[i] = c_line_likelihood(angle[i],radius[i],img)             # <<<<<<<<<<<<<<
  * 
@@ -5619,21 +5667,21 @@ static void __pyx_f_3t2b_6c_funs_c_multi_line_likelihood(__Pyx_memviewslice __py
                             if (unlikely(__pyx_t_4 >= (size_t)__pyx_v_angle.shape[0])) __pyx_t_5 = 0;
                             if (unlikely(__pyx_t_5 != -1)) {
                               __Pyx_RaiseBufferIndexErrorNogil(__pyx_t_5);
-                              __PYX_ERR(0, 178, __pyx_L8_error)
+                              __PYX_ERR(0, 181, __pyx_L8_error)
                             }
                             __pyx_t_6 = __pyx_v_i;
                             __pyx_t_5 = -1;
                             if (unlikely(__pyx_t_6 >= (size_t)__pyx_v_radius.shape[0])) __pyx_t_5 = 0;
                             if (unlikely(__pyx_t_5 != -1)) {
                               __Pyx_RaiseBufferIndexErrorNogil(__pyx_t_5);
-                              __PYX_ERR(0, 178, __pyx_L8_error)
+                              __PYX_ERR(0, 181, __pyx_L8_error)
                             }
                             __pyx_t_7 = __pyx_v_i;
                             __pyx_t_5 = -1;
                             if (unlikely(__pyx_t_7 >= (size_t)__pyx_v_out.shape[0])) __pyx_t_5 = 0;
                             if (unlikely(__pyx_t_5 != -1)) {
                               __Pyx_RaiseBufferIndexErrorNogil(__pyx_t_5);
-                              __PYX_ERR(0, 178, __pyx_L8_error)
+                              __PYX_ERR(0, 181, __pyx_L8_error)
                             }
                             *((__pyx_t_5numpy_float64_t *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_7 * __pyx_v_out.strides[0]) )) = __pyx_f_3t2b_6c_funs_c_line_likelihood((*((__pyx_t_5numpy_float64_t *) ( /* dim=0 */ (__pyx_v_angle.data + __pyx_t_4 * __pyx_v_angle.strides[0]) ))), (*((__pyx_t_5numpy_float64_t *) ( /* dim=0 */ (__pyx_v_radius.data + __pyx_t_6 * __pyx_v_radius.strides[0]) ))), __pyx_v_img);
                             goto __pyx_L11;
@@ -5717,9 +5765,9 @@ static void __pyx_f_3t2b_6c_funs_c_multi_line_likelihood(__Pyx_memviewslice __py
         #endif
       }
 
-      /* "t2b/c_funs.pyx":177
- *     cdef uint32_t i
+      /* "t2b/c_funs.pyx":180
  * 
+ *     # for i in range(total):
  *     for i in prange(total,nogil=True):             # <<<<<<<<<<<<<<
  *         out[i] = c_line_likelihood(angle[i],radius[i],img)
  * 
@@ -5743,8 +5791,8 @@ static void __pyx_f_3t2b_6c_funs_c_multi_line_likelihood(__Pyx_memviewslice __py
       }
   }
 
-  /* "t2b/c_funs.pyx":173
- *     return -1
+  /* "t2b/c_funs.pyx":175
+ *     return 0
  * 
  * cdef void c_multi_line_likelihood(np.float64_t[:] angle,np.float64_t[:] radius, np.float64_t[:,:] img, np.float64_t[:] out)nogil:             # <<<<<<<<<<<<<<
  *     cdef uint32_t total=angle.shape[0]
@@ -5758,7 +5806,7 @@ static void __pyx_f_3t2b_6c_funs_c_multi_line_likelihood(__Pyx_memviewslice __py
   __pyx_L0:;
 }
 
-/* "t2b/c_funs.pyx":180
+/* "t2b/c_funs.pyx":183
  *         out[i] = c_line_likelihood(angle[i],radius[i],img)
  * 
  * cpdef line_likelihood(angle,radius,img,transform_angle_radius=True):             # <<<<<<<<<<<<<<
@@ -5790,20 +5838,20 @@ static PyObject *__pyx_f_3t2b_6c_funs_line_likelihood(PyObject *__pyx_v_angle, P
   if (__pyx_optional_args) {
   }
 
-  /* "t2b/c_funs.pyx":181
+  /* "t2b/c_funs.pyx":184
  * 
  * cpdef line_likelihood(angle,radius,img,transform_angle_radius=True):
  *     cdef uint32_t total = angle.size             # <<<<<<<<<<<<<<
  *     assert total == radius.size
  *     res = pnp.zeros(total,dtype=pnp.float64)
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_angle, __pyx_n_s_size); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 181, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_angle, __pyx_n_s_size); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 184, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_As_uint32_t(__pyx_t_1); if (unlikely((__pyx_t_2 == ((uint32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 181, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_As_uint32_t(__pyx_t_1); if (unlikely((__pyx_t_2 == ((uint32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 184, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_total = __pyx_t_2;
 
-  /* "t2b/c_funs.pyx":182
+  /* "t2b/c_funs.pyx":185
  * cpdef line_likelihood(angle,radius,img,transform_angle_radius=True):
  *     cdef uint32_t total = angle.size
  *     assert total == radius.size             # <<<<<<<<<<<<<<
@@ -5812,51 +5860,51 @@ static PyObject *__pyx_f_3t2b_6c_funs_line_likelihood(PyObject *__pyx_v_angle, P
  */
   #ifndef CYTHON_WITHOUT_ASSERTIONS
   if (unlikely(!Py_OptimizeFlag)) {
-    __pyx_t_1 = __Pyx_PyInt_From_uint32_t(__pyx_v_total); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 182, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyInt_From_uint32_t(__pyx_v_total); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 185, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_radius, __pyx_n_s_size); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 182, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_radius, __pyx_n_s_size); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 185, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = PyObject_RichCompare(__pyx_t_1, __pyx_t_3, Py_EQ); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 182, __pyx_L1_error)
+    __pyx_t_4 = PyObject_RichCompare(__pyx_t_1, __pyx_t_3, Py_EQ); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 185, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 182, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 185, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     if (unlikely(!__pyx_t_5)) {
       PyErr_SetNone(PyExc_AssertionError);
-      __PYX_ERR(0, 182, __pyx_L1_error)
+      __PYX_ERR(0, 185, __pyx_L1_error)
     }
   }
   #endif
 
-  /* "t2b/c_funs.pyx":183
+  /* "t2b/c_funs.pyx":186
  *     cdef uint32_t total = angle.size
  *     assert total == radius.size
  *     res = pnp.zeros(total,dtype=pnp.float64)             # <<<<<<<<<<<<<<
  *     cdef np.float64_t[:] _res=res
  *     cdef np.float64_t[:,:] _img = img.astype(pnp.float64)
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_pnp); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_pnp); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyInt_From_uint32_t(__pyx_v_total); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_uint32_t(__pyx_v_total); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_4);
   __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_pnp); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_pnp); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_float64); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_float64); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_7) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_7) < 0) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -5864,30 +5912,30 @@ static PyObject *__pyx_f_3t2b_6c_funs_line_likelihood(PyObject *__pyx_v_angle, P
   __pyx_v_res = __pyx_t_7;
   __pyx_t_7 = 0;
 
-  /* "t2b/c_funs.pyx":184
+  /* "t2b/c_funs.pyx":187
  *     assert total == radius.size
  *     res = pnp.zeros(total,dtype=pnp.float64)
  *     cdef np.float64_t[:] _res=res             # <<<<<<<<<<<<<<
  *     cdef np.float64_t[:,:] _img = img.astype(pnp.float64)
  *     cdef np.float64_t [::1] _a = angle.astype(pnp.float64)
  */
-  __pyx_t_8 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_float64_t(__pyx_v_res, PyBUF_WRITABLE); if (unlikely(!__pyx_t_8.memview)) __PYX_ERR(0, 184, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_float64_t(__pyx_v_res, PyBUF_WRITABLE); if (unlikely(!__pyx_t_8.memview)) __PYX_ERR(0, 187, __pyx_L1_error)
   __pyx_v__res = __pyx_t_8;
   __pyx_t_8.memview = NULL;
   __pyx_t_8.data = NULL;
 
-  /* "t2b/c_funs.pyx":185
+  /* "t2b/c_funs.pyx":188
  *     res = pnp.zeros(total,dtype=pnp.float64)
  *     cdef np.float64_t[:] _res=res
  *     cdef np.float64_t[:,:] _img = img.astype(pnp.float64)             # <<<<<<<<<<<<<<
  *     cdef np.float64_t [::1] _a = angle.astype(pnp.float64)
  *     cdef np.float64_t [::1] _b = radius.astype(pnp.float64)
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_img, __pyx_n_s_astype); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 185, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_img, __pyx_n_s_astype); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 188, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_pnp); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 185, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_pnp); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 188, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 185, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 188, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_1 = NULL;
@@ -5903,27 +5951,27 @@ static PyObject *__pyx_f_3t2b_6c_funs_line_likelihood(PyObject *__pyx_v_angle, P
   __pyx_t_7 = (__pyx_t_1) ? __Pyx_PyObject_Call2Args(__pyx_t_4, __pyx_t_1, __pyx_t_3) : __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3);
   __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 185, __pyx_L1_error)
+  if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 188, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_dsds_nn___pyx_t_5numpy_float64_t(__pyx_t_7, PyBUF_WRITABLE); if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(0, 185, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_dsds_nn___pyx_t_5numpy_float64_t(__pyx_t_7, PyBUF_WRITABLE); if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(0, 188, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __pyx_v__img = __pyx_t_9;
   __pyx_t_9.memview = NULL;
   __pyx_t_9.data = NULL;
 
-  /* "t2b/c_funs.pyx":186
+  /* "t2b/c_funs.pyx":189
  *     cdef np.float64_t[:] _res=res
  *     cdef np.float64_t[:,:] _img = img.astype(pnp.float64)
  *     cdef np.float64_t [::1] _a = angle.astype(pnp.float64)             # <<<<<<<<<<<<<<
  *     cdef np.float64_t [::1] _b = radius.astype(pnp.float64)
  *     cdef uint32_t i
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_angle, __pyx_n_s_astype); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 186, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_angle, __pyx_n_s_astype); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 189, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_pnp); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 186, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_pnp); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 189, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_float64); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 186, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_float64); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 189, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = NULL;
@@ -5939,27 +5987,27 @@ static PyObject *__pyx_f_3t2b_6c_funs_line_likelihood(PyObject *__pyx_v_angle, P
   __pyx_t_7 = (__pyx_t_3) ? __Pyx_PyObject_Call2Args(__pyx_t_4, __pyx_t_3, __pyx_t_1) : __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_1);
   __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 186, __pyx_L1_error)
+  if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 189, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_dc_nn___pyx_t_5numpy_float64_t(__pyx_t_7, PyBUF_WRITABLE); if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 186, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_dc_nn___pyx_t_5numpy_float64_t(__pyx_t_7, PyBUF_WRITABLE); if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 189, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __pyx_v__a = __pyx_t_10;
   __pyx_t_10.memview = NULL;
   __pyx_t_10.data = NULL;
 
-  /* "t2b/c_funs.pyx":187
+  /* "t2b/c_funs.pyx":190
  *     cdef np.float64_t[:,:] _img = img.astype(pnp.float64)
  *     cdef np.float64_t [::1] _a = angle.astype(pnp.float64)
  *     cdef np.float64_t [::1] _b = radius.astype(pnp.float64)             # <<<<<<<<<<<<<<
  *     cdef uint32_t i
  * 
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_radius, __pyx_n_s_astype); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 187, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_radius, __pyx_n_s_astype); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 190, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_pnp); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 187, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_pnp); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 190, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 187, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 190, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_1 = NULL;
@@ -5975,16 +6023,16 @@ static PyObject *__pyx_f_3t2b_6c_funs_line_likelihood(PyObject *__pyx_v_angle, P
   __pyx_t_7 = (__pyx_t_1) ? __Pyx_PyObject_Call2Args(__pyx_t_4, __pyx_t_1, __pyx_t_3) : __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3);
   __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 187, __pyx_L1_error)
+  if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 190, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_dc_nn___pyx_t_5numpy_float64_t(__pyx_t_7, PyBUF_WRITABLE); if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 187, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_dc_nn___pyx_t_5numpy_float64_t(__pyx_t_7, PyBUF_WRITABLE); if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 190, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __pyx_v__b = __pyx_t_10;
   __pyx_t_10.memview = NULL;
   __pyx_t_10.data = NULL;
 
-  /* "t2b/c_funs.pyx":190
+  /* "t2b/c_funs.pyx":193
  *     cdef uint32_t i
  * 
  *     c_multi_line_likelihood(_a,_b,_img,_res)             # <<<<<<<<<<<<<<
@@ -5992,7 +6040,7 @@ static PyObject *__pyx_f_3t2b_6c_funs_line_likelihood(PyObject *__pyx_v_angle, P
  */
   __pyx_f_3t2b_6c_funs_c_multi_line_likelihood(__pyx_v__a, __pyx_v__b, __pyx_v__img, __pyx_v__res);
 
-  /* "t2b/c_funs.pyx":191
+  /* "t2b/c_funs.pyx":194
  * 
  *     c_multi_line_likelihood(_a,_b,_img,_res)
  *     return res             # <<<<<<<<<<<<<<
@@ -6002,7 +6050,7 @@ static PyObject *__pyx_f_3t2b_6c_funs_line_likelihood(PyObject *__pyx_v_angle, P
   __pyx_r = __pyx_v_res;
   goto __pyx_L0;
 
-  /* "t2b/c_funs.pyx":180
+  /* "t2b/c_funs.pyx":183
  *         out[i] = c_line_likelihood(angle[i],radius[i],img)
  * 
  * cpdef line_likelihood(angle,radius,img,transform_angle_radius=True):             # <<<<<<<<<<<<<<
@@ -6071,13 +6119,13 @@ static PyObject *__pyx_pw_3t2b_6c_funs_13line_likelihood(PyObject *__pyx_self, P
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_radius)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("line_likelihood", 0, 3, 4, 1); __PYX_ERR(0, 180, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("line_likelihood", 0, 3, 4, 1); __PYX_ERR(0, 183, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_img)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("line_likelihood", 0, 3, 4, 2); __PYX_ERR(0, 180, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("line_likelihood", 0, 3, 4, 2); __PYX_ERR(0, 183, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
@@ -6087,7 +6135,7 @@ static PyObject *__pyx_pw_3t2b_6c_funs_13line_likelihood(PyObject *__pyx_self, P
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "line_likelihood") < 0)) __PYX_ERR(0, 180, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "line_likelihood") < 0)) __PYX_ERR(0, 183, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -6107,7 +6155,7 @@ static PyObject *__pyx_pw_3t2b_6c_funs_13line_likelihood(PyObject *__pyx_self, P
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("line_likelihood", 0, 3, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 180, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("line_likelihood", 0, 3, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 183, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("t2b.c_funs.line_likelihood", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -6129,7 +6177,7 @@ static PyObject *__pyx_pf_3t2b_6c_funs_12line_likelihood(CYTHON_UNUSED PyObject 
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2.__pyx_n = 1;
   __pyx_t_2.transform_angle_radius = __pyx_v_transform_angle_radius;
-  __pyx_t_1 = __pyx_f_3t2b_6c_funs_line_likelihood(__pyx_v_angle, __pyx_v_radius, __pyx_v_img, 0, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_3t2b_6c_funs_line_likelihood(__pyx_v_angle, __pyx_v_radius, __pyx_v_img, 0, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 183, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;

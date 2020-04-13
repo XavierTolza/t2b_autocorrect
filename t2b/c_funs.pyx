@@ -108,7 +108,7 @@ cdef bool c_point_is_in_image(np.float64_t x,np.float64_t y,uint32_t xmax,uint32
 
 cdef void c_line_find_coordinates(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img, np.float64_t* out)nogil:
     cdef uint32_t xmax = img.shape[0]
-    cdef uint32_t ymax = img.shape[0]
+    cdef uint32_t ymax = img.shape[1]
     cdef np.float64_t x1,y1,x2,y2,s,c
     s = sin(angle)
     c=cos(angle)
@@ -147,7 +147,7 @@ cpdef line_find_coordinates(np.float64_t angle,np.float64_t radius, np.float64_t
     c_line_find_coordinates(angle,radius,img,_res)
     return res
 
-cdef np.float64_t c_line_likelihood(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img)nogil:
+cdef np.float64_t c_line_likelihood(np.float64_t angle,np.float64_t radius, np.float64_t[:,:] img) nogil:
     # On trouve les points d'intersection
     cdef np.float64_t* coord = [0,0,0,0]
     c_line_find_coordinates(angle,radius,img,coord)
@@ -155,9 +155,10 @@ cdef np.float64_t c_line_likelihood(np.float64_t angle,np.float64_t radius, np.f
     cdef uint32_t distance,x,y
     x1,y1,x2,y2 = coord[0],coord[1],coord[2],coord[3]
     cdef np.float64_t result=0
+    cdef uint32_t xmax = img.shape[0]
+    cdef uint32_t ymax = img.shape[1]
 
     distance = <uint32_t>(sqrt(((x2-x1)**2+(y2-y1)**2)/2.0))
-    distance = distance
     if distance>10:
         # On a les coordonnées de la ligne, on peut sélectionner les points intermédiaires
         for k in range(1,distance):
@@ -165,15 +166,17 @@ cdef np.float64_t c_line_likelihood(np.float64_t angle,np.float64_t radius, np.f
             x = <uint32_t>(x2*ratio+(1-ratio)*x1)
             y = <uint32_t>(y2*ratio+(1-ratio)*y1)
             # print(([angle,radius],k,[x1,y1],[x2,y2],[x,y],result))
-            result += img[x,y]/<np.float64_t>(distance)
+            if x < xmax and y < ymax:
+                result += img[x,y]/<np.float64_t>(distance)
         return result
 
-    return -1
+    return 0
 
 cdef void c_multi_line_likelihood(np.float64_t[:] angle,np.float64_t[:] radius, np.float64_t[:,:] img, np.float64_t[:] out)nogil:
     cdef uint32_t total=angle.shape[0]
     cdef uint32_t i
 
+    # for i in range(total):
     for i in prange(total,nogil=True):
         out[i] = c_line_likelihood(angle[i],radius[i],img)
 

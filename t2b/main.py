@@ -8,7 +8,7 @@ except ImportError:
     plt = None
 import numpy as np
 
-from t2b.c_funs import likelihood, gen_all_indexes
+from t2b.c_funs import likelihood, gen_all_indexes, line_likelihood, line_find_coordinates
 from t2b.constants import Nb_dots
 from t2b.tools import charger_motifs, rot_matrix
 
@@ -130,6 +130,46 @@ def find_grid_coordinates2(image):
     return res
 
 
+def contour_from_lines(lines):
+    a1, r1 = lines
+    a2, r2 = [np.roll(i, 1) for i in lines]
+    (s1, c1), (s2, c2) = [[m(i) for m in [np.sin, np.cos]] for i in [a1, a2]]
+
+    den = (c2 * s1 - c1 * s2)
+    return np.transpose([
+        (r2 * s1 - r1 * s2) / den,
+        (c2 * r1 - c1 * r2) / den,
+    ])
+
+
+def find_grid_coordinates3(image):
+    imc = match_filter_image(image, blur_size=20)
+    imc = normalize(gradient_norm(imc))
+
+    angles = np.deg2rad(np.arange(-2, 2, 0.1))
+    line_positions = np.array([65, 56, 808, 540])
+    line_offset = np.arange(-40, 40, 3)[None]
+    radius = line_positions[:, None] + line_offset
+    angles_delta = np.deg2rad([0, 90, 0, 90])
+
+    data = np.array(np.broadcast_arrays(angles[:, None, None] + angles_delta[None, :, None], radius[None]))
+
+    cost = line_likelihood(*np.reshape(data, (2, -1)), imc).reshape(data.shape[1:])
+
+    argmax = np.argmax(np.moveaxis(cost, 1, 0).reshape(4, -1), axis=1)
+    argmax = np.unravel_index(argmax, cost[:, 0].shape)
+    found_angle = angles[argmax[0]] + angles_delta
+    found_radius = line_offset[0][argmax[1]] + line_positions
+
+    points = contour_from_lines(np.roll([found_angle, found_radius], -1, axis=1))
+    plt.scatter(*points.T, c=np.arange(4))
+
+    x, y = [np.linspace(0.5 / i, 1 - (0.5 / i), i) for i in Nb_dots]
+    grid = x[:, None, None] * points[[0, -1]][None] + (1 - x)[:, None, None] * points[[1, 2]][None]
+    grid = y[None, :, None] * grid[:, 0, None] + (1 - y)[None, :, None] * grid[:, 1, None]
+    return grid
+
+
 def marked_selector(grid, image, trigger=0.2):
     imc = normalize(cv2.blur(gradient_norm(image.std(-1)), (10,) * 2))
     sel = imc[grid[:, 0], grid[:, 1]]
@@ -182,8 +222,10 @@ def plot_result(image, grid, coord, result, ax=None, debug=False):
     return ax
 
 
-def four_point_transform(im, points):
-    maxWidth, maxHeight = im.shape[:2][::-1]
+def four_point_transform(im, points, dst_shape=None):
+    if dst_shape is None:
+        dst_shape = im.shape[:2][::-1]
+    maxWidth, maxHeight = dst_shape
     dst = np.array([
         [0, 0],
         [maxWidth - 1, 0],
