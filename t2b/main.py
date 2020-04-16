@@ -8,7 +8,8 @@ except ImportError:
     plt = None
 import numpy as np
 
-from t2b.c_funs import likelihood, gen_all_indexes, line_likelihood, line_find_coordinates
+from t2b.likelihood import likelihood, gen_all_indexes
+from t2b.line_likelihood import line_likelihood, line_find_coordinates
 from t2b.constants import Nb_dots
 from t2b.tools import charger_motifs, rot_matrix
 
@@ -21,51 +22,10 @@ def make_gaussian_kernel(kernel_size, sigma=5):
     return kernel
 
 
-def find_image_coordinates(image, trigger=0.5, debug=False):
-    shape = image.shape
-    dots = image.std(-1)
-    kernel_size = int(np.min(shape[:-1]) / 100)
-    if kernel_size > 1:
-        dots = cv2.blur(dots, (kernel_size,) * 2)
-    dots = normalize(dots)
-
-    # trigger = np.sort(dots.ravel())[int(dots.size * 0.98)]
-    dots_blur = normalize(convolve2d(dots, make_gaussian_kernel(int(image.shape[0] * 30 / 1342)), mode="same"))
-    dots_trigger = dots_blur > trigger
-
-    cnt = cv2.findContours(dots_trigger.astype(np.uint8), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2]
-    coord = np.round(np.array([np.median(i[:, 0, :], 0) for i in cnt])).astype(np.uint)
-    coordr = coord / np.array(shape[:2])[None, ::-1]
-
-    # On filtre les points qui sont trop près des bords
-    margin = 0.01
-    selector = np.logical_and(coordr > margin, coordr < (1 - margin)).all(1)
-    coord = coord[:, ::-1]
-
-    if debug:
-        return coord[selector], dots
-    return coord[selector]
-
-
-def rotate_image(image, angle, center=None):
-    image_center = tuple(np.array(image.shape[1::-1]) / 2)
-    rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
-    result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
-    return result
-
-
 def normalize(x):
     x -= x.min()
     x /= x.max()
     return x
-
-
-def find_grid_coordinates(coord):
-    box = np.array([coord.min(0), coord.max(0)])
-    grid = np.array(list(product(*[np.linspace(0, 1, n) * (stop - start) + start
-                                   for n, (start, stop) in zip(Nb_dots, box.T)])))
-
-    return grid
 
 
 def gradient_norm(im):
@@ -76,58 +36,61 @@ def convolve2d(im, kernel, mode="same"):
     return cv2.filter2D(im, -1, kernel)
 
 
-def match_filter_image(image, kernel_size=21, blur_size=5):
-    imbw = -image.max(-1).astype(np.float32)
-    imbw = normalize(gradient_norm(imbw))
+def img_to_bw(img):
+    imbw = -img.max(-1).astype(np.float32)
+    return imbw
+
+
+def guess_kernel_size(imbw):
+    S = np.fft.fft2(imbw)
+    S = np.log(np.abs(S))
+    start = np.array([15, 5])
+    _S = S[start[0]:75, start[1]:55]
+    argmax = np.array(np.unravel_index(np.argmax(_S.ravel()), _S.shape))
+    argmax += start
+    res = np.mean(np.array(imbw.shape) / argmax)
+    return res
+
+
+def draw_contours(img, cnts, color=(0, 255, 0)):
+    return cv2.drawContours(img, cnts, -1, color, 3)
+
+
+def contour_to_rect(cnt):
+    epsilon = 0.1 * cv2.arcLength(cnt, True)
+    approx = cv2.approxPolyDP(cnt, epsilon, True)
+    return approx
+
+
+def match_filter_image(imbw, kernel_size=None, blur_size=None):
+    if kernel_size is None:
+        kernel_size_float = guess_kernel_size(imbw)
+    else:
+        kernel_size_float = kernel_size
+    kernel_size = int(kernel_size_float)
+
+    if blur_size is None:
+        blur_size = kernel_size_float
+    blur_size = int(blur_size)
+
+    imbw = gradient_norm(imbw)
 
     kernel = charger_motifs(["all"])[0]
     kernel = cv2.resize(kernel, (kernel_size, kernel_size)) / 255
     kernel = gradient_norm(kernel)
+    kernel = kernel / kernel.sum()
 
     imm1 = convolve2d(imbw, kernel, mode="same")
-    imc = normalize(cv2.blur(imm1, (blur_size,) * 2))
+    imc = cv2.blur(imm1, (blur_size,) * 2)
     return imc
 
 
-def gen_all_indexes(offset, scale, angle):
-    x, y = [np.arange(i) * s for i, s in zip(Nb_dots, scale)]
-    xy = np.array(list(product(x, y)))
-    R = rot_matrix(angle)
-    xy = R.dot(xy.T).T
-    xy += np.array(offset)[None]
-    xy = xy.astype(np.uint)
-    return xy
-
-
-def find_grid_coordinates2(image):
-    imc = match_filter_image(image).astype(np.float64)
-
-    imc = normalize(np.array([normalize(image.std(-1)), imc]).sum(0))
-
-    angle = np.deg2rad(np.arange(-1, 1, 0.1)).astype(np.float64)
-
-    shape = np.array(imc.shape[:2])
-    rect_size = np.array([
-        np.linspace(700, 800, 16) / 846,
-        np.linspace(450, 500, 16) / 600,
-    ]) * shape[:, None]
-    offset = (np.array([
-        np.linspace(50, 90, 16) / 846,
-        np.linspace(40, 84, 16) / 600,
-    ]) * shape[:, None]).astype(np.uint32)
-
-    size = (rect_size / Nb_dots[:, None]).astype(np.float64)
-    shape = (offset.shape[1], offset.shape[1], size.shape[1], size.shape[1], angle.size)
-    cost = np.zeros(shape)
-
-    likelihood(*offset, *size, angle, imc, cost.ravel())
-
-    # Find max
-    argmax = np.unravel_index(cost.ravel().argmax(), cost.shape)
-    values = np.array([i[j] for i, j in zip([offset[0], offset[1], size[0], size[1], angle], argmax)])
-
-    res = gen_all_indexes(values[:2], values[2:4], values[4])
-    return res
+def guess_trigger(imc):
+    margin = 0.15
+    shapex, shapey = shape = np.array(imc.shape[:2])
+    marginx, marginy = (shape * margin).astype(np.int)
+    sample = imc[marginx:shapex - marginx, marginy:shapey - marginy]
+    return sample.mean() - 2 * sample.std()
 
 
 def contour_from_lines(lines):
@@ -142,7 +105,21 @@ def contour_from_lines(lines):
     ])
 
 
-def find_grid_coordinates3(image):
+def search_lines(imc, pos, angles):
+    angles = np.deg2rad(np.arange(-2, 2, 0.1))
+
+    line_positions = np.array([65, 56, 808, 540])
+    line_offset = np.arange(-40, 40, 3)[None]
+    radius = line_positions[:, None] + line_offset
+    angles_delta = np.deg2rad([0, 90, 0, 90])
+
+    data = np.array(np.broadcast_arrays(angles[:, None, None] + angles_delta[None, :, None], radius[None]))
+
+    cost = line_likelihood(*np.reshape(data, (2, -1)), imc).reshape(data.shape[1:])
+    return cost
+
+
+def find_grid_coordinates(image):
     imc = match_filter_image(image, blur_size=20)
     imc = normalize(gradient_norm(imc))
 
@@ -155,14 +132,12 @@ def find_grid_coordinates3(image):
     data = np.array(np.broadcast_arrays(angles[:, None, None] + angles_delta[None, :, None], radius[None]))
 
     cost = line_likelihood(*np.reshape(data, (2, -1)), imc).reshape(data.shape[1:])
-
     argmax = np.argmax(np.moveaxis(cost, 1, 0).reshape(4, -1), axis=1)
     argmax = np.unravel_index(argmax, cost[:, 0].shape)
     found_angle = angles[argmax[0]] + angles_delta
     found_radius = line_offset[0][argmax[1]] + line_positions
 
     points = contour_from_lines(np.roll([found_angle, found_radius], -1, axis=1))
-    plt.scatter(*points.T, c=np.arange(4))
 
     x, y = [np.linspace(0.5 / i, 1 - (0.5 / i), i) for i in Nb_dots]
     grid = x[:, None, None] * points[[0, -1]][None] + (1 - x)[:, None, None] * points[[1, 2]][None]
@@ -236,7 +211,19 @@ def four_point_transform(im, points, dst_shape=None):
     return warped
 
 
-def load_image(filename, return_info=False, page_threshold=0.4):
+def find_contours(thresholded, min_area=0, max_area=1):
+    thresholded = thresholded.astype(np.uint8) * 255
+    cnts = cv2.findContours(thresholded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = cnts[0]
+    area = np.array([cv2.contourArea(i) for i in cnts]) / np.prod(thresholded.shape)
+    sel = np.logical_and(area > min_area, area < max_area)
+    if (~sel).any():
+        cnts = [i for i, s in zip(cnts, sel) if s]
+        area = area[sel]
+    return cnts, area
+
+
+def load_image(filename, return_info=False, page_extract=True, resize=True, page_threshold=0.4):
     if type(filename) == str:
         im = cv2.imread(filename)
         # im = ImageEnhance.Contrast(im).enhance(1.6)
@@ -246,26 +233,30 @@ def load_image(filename, return_info=False, page_threshold=0.4):
     if im.shape[0] < im.shape[1]:
         im = np.moveaxis(im, 1, 0)[:, ::-1]
 
-    # 4 points transform
-    imbw = im.mean(-1)
-    imc = cv2.blur(imbw, (im.shape[1] // 100,) * 2)
+    if page_extract:
+        # 4 points transform
+        imbw = im.mean(-1)
+        imc = cv2.blur(imbw, (im.shape[1] // 100,) * 2)
 
-    # find contours in the thresholded image
-    imc = normalize(imc)
-    thresholded = (imc > page_threshold).astype(np.uint8)
-    cnts = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = cnts[0]
-    area = np.array([cv2.contourArea(i) for i in cnts])
-    cnts = cnts[np.argmax(area)][:, 0]
+        # find contours in the thresholded image
+        imc = normalize(imc)
+        thresholded = (imc > page_threshold).astype(np.uint8)
+        cnts = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = cnts[0]
+        area = np.array([cv2.contourArea(i) for i in cnts])
+        cnts = cnts[np.argmax(area)][:, 0]
 
-    # Find 4 points
-    cost = np.linalg.norm((cnts / np.array(imbw.shape[::-1])[None, :])[None, :, :] -
-                          np.reshape([0, 0, 1, 0, 1, 1, 0, 1], (4, 1, 2)), axis=-1)
-    points = cnts[np.argmin(cost, axis=1)]
+        # Find 4 points
+        cost = np.linalg.norm((cnts / np.array(imbw.shape[::-1])[None, :])[None, :, :] -
+                              np.reshape([0, 0, 1, 0, 1, 1, 0, 1], (4, 1, 2)), axis=-1)
+        points = cnts[np.argmin(cost, axis=1)]
 
-    page = four_point_transform(im, points)
+        page = four_point_transform(im, points)
+    else:
+        page = im
 
-    page = cv2.resize(page, (846, 600)[::-1])
+    if resize:
+        page = cv2.resize(page, (846, 600)[::-1])
 
     if return_info:
         return page, (im, points)

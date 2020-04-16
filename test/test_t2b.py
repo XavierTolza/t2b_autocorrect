@@ -3,7 +3,7 @@ from glob import glob
 from os.path import abspath, dirname, join, relpath
 from unittest import TestCase, skipIf
 
-from t2b.c_funs import gen_index, _likelihood
+from t2b.likelihood import gen_index, _likelihood
 from t2b.constants import is_correct
 from t2b.main import *
 from t2b.tools import rot_matrix
@@ -112,6 +112,17 @@ class Test(TestCase, GeneralTest):
             ax.scatter(*grid.T, facecolor="none", edgecolors="r", s=200)
             pass
 
+    def test_find_grid_coordinates3(self):
+        images = self.images
+        for image in images:
+            im = load_image(image)
+            grid = find_grid_coordinates3(im)
+
+            fig, ax = plt.subplots(1, 1)
+            ax.imshow(np.moveaxis(im, 1, 0), origin="lower")
+            ax.scatter(*grid.T, facecolor="none", edgecolors="r", s=200)
+            pass
+
     def test_filter_marked(self):
         for image in self.images:
             image = load_image(image)
@@ -137,7 +148,7 @@ class Test(TestCase, GeneralTest):
             pass
 
     def test_line_likelihood(self):
-        from t2b.c_funs import line_likelihood
+        from t2b.likelihood import line_likelihood
         im = np.zeros((100, 100))
         im[40, :] = 1
         imr = rotate_image(im, -45)
