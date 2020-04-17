@@ -1,6 +1,6 @@
 from itertools import product
 
-from libc.stdint cimport uint32_t, uint8_t,uint16_t
+from libc.stdint cimport uint32_t, uint8_t,uint16_t,int8_t
 from libcpp cimport bool
 from cython.parallel cimport prange
 cimport numpy as np
@@ -31,6 +31,7 @@ cdef extern from "likelihood.h":
 
     void c_spawn_grid(estimate_t* t,uint8_t x, uint8_t y, config_t* conf, dot2d* out)nogil
     void c_spawn_grid_float(estimate_t* t,uint8_t x, uint8_t y, config_t* conf, float* out)nogil
+    void c_likelihood(estimate_t* estimate, uint8_t* img, int8_t* dimg, config_t* config, uint32_t* out, float* dout)nogil
 
 cdef uint32_t Nb_dots_x = Nb_dots[0]
 cdef uint32_t Nb_dots_y = Nb_dots[1]
@@ -71,3 +72,20 @@ cpdef spawn_grid_float(uint16_t[::1] estimate):
             c_spawn_grid_float(<estimate_t*>(&estimate[0]), x,y,&conf,<float*>(&_res[i,0]))
             i+=1
     return res
+
+cpdef likelihood(uint16_t[::1] estimate, img):
+    assert img.ndim==2
+    cdef uint8_t[::1] _img = pnp.ascontiguousarray(img.ravel())
+    cdef int8_t[::1] dimg = pnp.ascontiguousarray(pnp.moveaxis(pnp.gradient(img),0,-1).ravel(), dtype=pnp.int8)
+    cdef int8_t* dimg_p = &(dimg[0])
+    cdef uint8_t* img_p = &(_img[0])
+    cdef config_t config = get_default_config()
+    config.img_size[0] = img.shape[0]
+    config.img_size[1] = img.shape[1]
+    cdef uint32_t res;
+    dres = pnp.zeros(config.N_params,dtype=pnp.float32)
+    cdef float[:] _dres = dres
+
+    c_likelihood(<estimate_t*>(&estimate[0]),img_p,dimg_p,&config,&res,&_dres[0])
+
+    return res, dres

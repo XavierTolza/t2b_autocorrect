@@ -1,4 +1,7 @@
 from unittest import TestCase
+
+import cv2
+
 from t2b.likelihood import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,3 +33,37 @@ class Test(TestCase):
         assert np.all(np.round(res + 1e-6).astype(np.int) == res_int)
         plt.scatter(*res.T)
         return
+
+    @property
+    def default_estimate(self):
+        return np.array([50, 800, 800, 50, 50, 50, 600, 600], dtype=np.uint16)
+
+    def get_test_image(self, estimate=None, sigma=3):
+        if estimate is None:
+            estimate = self.default_estimate
+        coord = spawn_grid(estimate.astype(np.uint16))
+        max = coord.max(0)
+        shape = max * 1.1
+        res = np.zeros(tuple(shape.astype(int)))
+        res[coord[:, 0], coord[:, 1]] = 255
+        res_blur = cv2.GaussianBlur(res, (sigma * 6 + 1,) * 2, sigma)
+        res_blur /= (res_blur.max() / 255)
+        return res_blur.astype(np.uint8)
+
+    def test_likelihood(self):
+        estimate = self.default_estimate
+        img = self.get_test_image(estimate, sigma=4)
+        cost, grad = likelihood(estimate, img)
+        best_cost = img.max() * np.prod(Nb_dots)
+        assert cost == best_cost
+        assert np.all(grad == 0)
+
+        # dimg = pnp.moveaxis(pnp.gradient(img), 0, -1)
+        estimate = estimate.reshape((2, -1))
+        estimate[0, :] -= 1
+        cost, grad = likelihood(estimate.ravel(), img)
+        assert cost < best_cost
+        grad = grad.reshape(2, -1)
+        assert np.all(grad[0] > 0)
+        assert np.all(grad[1] == 0)
+        pass

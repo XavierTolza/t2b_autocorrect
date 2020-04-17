@@ -1,10 +1,12 @@
 #ifndef LIKELIHOOD_H
 #define LIKELIHOOD_H
+
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define IMG_INDEX(x,y,c)    (x * c->img_size[1] + y)
-#define DIMG_INDEX(x,y,z,c) (x * c->img_size[1] + y*2+z)
+#define DIMG_INDEX(x,y,z,c) (x * c->img_size[1]*2 + y*2+z)
 
 typedef struct {
     uint32_t x;
@@ -53,32 +55,47 @@ void c_spawn_grid(estimate_t* t,uint8_t x, uint8_t y, config_t* conf, dot2d* out
 
 }
 
-inline void gradient(uint8_t* x, uint8_t* y, int8_t* dimg, config_t* config,float* dout){
-    //int8_t _dimg = dimg[DIMG_INDEX(*x,*y,0,config)];
-    float rx = ((float)*x)/((float)config->Nx);
-    float ry = ((float)*y)/((float)config->Ny);
-    //float tmp[8] = {0};
+inline void gradient(uint8_t* x, uint8_t* y,dot2d* dot, int8_t* dimg, config_t* config,float* dout){
+    float rx = ((float)*x)/((float)config->Nx-1);
+    float rxi = 1-rx;
+    float ry = ((float)*y)/((float)config->Ny-1);
+    float ryi = 1-ry;
 
-    dout[0] = -rx*ry; // xa
-    dout[1] = -rx*ry; // xb
-    dout[2] = -rx*ry; // xc
-    dout[3] = -rx*ry; // xd
+//    printf("%i\n",dimg[DIMG_INDEX(dot->x,dot->y,0,config)]);
+    memset((void*)dout,dimg[DIMG_INDEX(dot->x,dot->y,0,config)],sizeof(float)*config->N_params/2);
+    memset((void*)(dout+config->N_params/2),dimg[DIMG_INDEX(dot->x,dot->y,1,config)],sizeof(float)*config->N_params/2);
 
+    dout[0] *= rxi*ryi; // xa
+    dout[1] *= rx*ryi;  // xb
+    dout[2] *= rx*ry;   // xc
+    dout[3] *= rxi*ry;  // xd
+
+    dout[4] *= rxi*ryi; // ya
+    dout[5] *= rx*ryi;  // yb
+    dout[6] *= rx*ry;   // yc
+    dout[7] *= rxi*ry;  // yd
 }
 
 void c_likelihood(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* config, uint32_t* out, float* dout){
     uint8_t x,y;
     dot2d dot;
     *out = 0;
+    uint8_t i;
     memset((void*)dout,0,config->N_params*sizeof(dout[0]));
+
+    float* tmp = (float*) malloc(config->N_params*sizeof(dout[0]));
 
     for(x=0;x<config->Nx;x++){
         for(y=0;y<config->Ny;y++){
             c_spawn_grid(estimate,x,y,config,&dot);
-            *out += img[IMG_INDEX(x,y,config)];
-            gradient(&x,&y,dimg,config,dout);
+            *out += img[IMG_INDEX(dot.x,dot.y,config)];
+            gradient(&x,&y,&dot,dimg,config,tmp);
+            for(i=0;i<config->N_params;i++){
+                dout[i] += tmp[i];
+            }
         }
     }
+    free(tmp);
 }
 
 #endif
