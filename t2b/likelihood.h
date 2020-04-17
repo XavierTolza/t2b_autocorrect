@@ -53,7 +53,7 @@ void c_spawn_grid(estimate_t* t,uint8_t x, uint8_t y, config_t* conf, dot2d* out
 
 }
 
-inline void gradient(uint16_t* x, uint16_t* y, int8_t* dimg, config_t* config,float* dout){
+inline void gradient(uint8_t* x, uint8_t* y, int8_t* dimg, config_t* config,float* dout){
     //int8_t _dimg = dimg[DIMG_INDEX(*x,*y,0,config)];
     float rx = ((float)*x)/((float)config->Nx);
     float ry = ((float)*y)/((float)config->Ny);
@@ -76,6 +76,7 @@ void c_likelihood(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* con
         for(y=0;y<config->Ny;y++){
             c_spawn_grid(estimate,x,y,config,&dot);
             *out += img[IMG_INDEX(x,y,config)];
+            gradient(&x,&y,dimg,config,dout);
         }
     }
 }
