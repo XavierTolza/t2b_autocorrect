@@ -58,12 +58,29 @@ class Test(TestCase):
         assert cost == best_cost
         assert np.all(grad == 0)
 
-        # dimg = pnp.moveaxis(pnp.gradient(img), 0, -1)
+        dimg = diff_image(img)
         estimate = estimate.reshape((2, -1))
-        estimate[0, :] -= 1
+        estimate[0, :] -= 3
+        grid = spawn_grid(estimate.ravel())
         cost, grad = likelihood(estimate.ravel(), img)
         assert cost < best_cost
         grad = grad.reshape(2, -1)
         assert np.all(grad[0] > 0)
         assert np.all(grad[1] == 0)
+        pass
+
+    def test_diff_image(self):
+        img = self.get_test_image()
+        print(img.shape)
+        dimg = diff_image(img)
+        assert np.all(dimg[50, 50, :] == 0)
+        pass
+
+    def get_test_dimg(self, *args, **kwargs):
+        return diff_image(self.get_test_image(*args, **kwargs))
+
+    def test_gradient(self):
+        est = self.default_estimate
+        dimg = self.get_test_dimg().ravel()
+        grad = gradient(est, dimg)
         pass

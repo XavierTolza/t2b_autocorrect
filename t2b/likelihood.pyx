@@ -32,18 +32,24 @@ cdef extern from "likelihood.h":
     void c_spawn_grid(estimate_t* t,uint8_t x, uint8_t y, config_t* conf, dot2d* out)nogil
     void c_spawn_grid_float(estimate_t* t,uint8_t x, uint8_t y, config_t* conf, float* out)nogil
     void c_likelihood(estimate_t* estimate, uint8_t* img, int8_t* dimg, config_t* config, uint32_t* out, float* dout)nogil
+    void c_diff_image(uint8_t* img,int8_t* dimg, config_t* conf)nogil except+
+    void c_gradient(uint8_t* x, uint8_t* y,dot2d* dot, int8_t* dimg, config_t* config,float* dout)nogil
 
 cdef uint32_t Nb_dots_x = Nb_dots[0]
 cdef uint32_t Nb_dots_y = Nb_dots[1]
 cdef uint32_t Nb_dots_t = Nb_dots[0]*Nb_dots[1]
 
-cpdef config_t get_default_config():
+cpdef config_t get_default_config(image=None)except+:
     cdef config_t res
     res.Nx = Nb_dots_x
     res.Ny = Nb_dots_y
     res.N_params = 8
-    res.img_size[0] = 0
-    res.img_size[1] = 0
+    if image is not None:
+        res.img_size[0] = image.shape[0]
+        res.img_size[1] = image.shape[1]
+    else:
+        res.img_size[0] = 0
+        res.img_size[1] = 0
     return res
 
 
@@ -76,12 +82,12 @@ cpdef spawn_grid_float(uint16_t[::1] estimate):
 cpdef likelihood(uint16_t[::1] estimate, img):
     assert img.ndim==2
     cdef uint8_t[::1] _img = pnp.ascontiguousarray(img.ravel())
-    cdef int8_t[::1] dimg = pnp.ascontiguousarray(pnp.moveaxis(pnp.gradient(img),0,-1).ravel(), dtype=pnp.int8)
+    dimg_python = pnp.zeros(pnp.prod(img.shape+(2,)),dtype=pnp.int8)
+    cdef int8_t[::1] dimg = dimg_python
     cdef int8_t* dimg_p = &(dimg[0])
     cdef uint8_t* img_p = &(_img[0])
-    cdef config_t config = get_default_config()
-    config.img_size[0] = img.shape[0]
-    config.img_size[1] = img.shape[1]
+    cdef config_t config = get_default_config(img)
+    c_diff_image(img_p,dimg_p,&config)
     cdef uint32_t res;
     dres = pnp.zeros(config.N_params,dtype=pnp.float32)
     cdef float[:] _dres = dres
@@ -89,3 +95,26 @@ cpdef likelihood(uint16_t[::1] estimate, img):
     c_likelihood(<estimate_t*>(&estimate[0]),img_p,dimg_p,&config,&res,&_dres[0])
 
     return res, dres
+
+cpdef gradient(uint16_t[::1] estimate,int8_t[::1] dimg)except+:
+    cdef config_t conf = get_default_config(dimg)
+    cdef uint8_t x,y;
+    res = pnp.zeros((pnp.prod(Nb_dots),conf.N_params),dtype=pnp.float32)
+    cdef float[:,:] _res = res
+    cdef dot2d dot;
+    for i,(x, y) in enumerate(product(*[range(i) for i in Nb_dots])):
+        c_spawn_grid(<estimate_t*>(&estimate[0]),x,y,&conf,&dot)
+        c_gradient(&x,&y,&dot,&dimg[0],&conf,&_res[i,0])
+    return res
+
+cpdef diff_image(uint8_t[:,::1] img) except+:
+    cdef config_t conf = get_default_config(img)
+    res = pnp.zeros(img.size*2,dtype=pnp.int8)
+    cdef int8_t[::1] _res = res
+    # img_r = img.ravel()
+    # cdef uint8_t[::1] _img = img_r
+    cdef uint8_t* img_p = &img[0,0]
+
+    c_diff_image(img_p,&_res[0],&conf)
+
+    return res.reshape((img.shape[0],img.shape[1],2))

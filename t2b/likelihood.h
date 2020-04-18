@@ -5,8 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define IMG_INDEX(x,y,c)    (x * c->img_size[1] + y)
-#define DIMG_INDEX(x,y,z,c) (x * c->img_size[1]*2 + y*2+z)
+#define IMG_INDEX(x,y,c)    ((x) * c->img_size[1] + (y))
+#define DIMG_INDEX(x,y,z,c) ((x) * c->img_size[1]*2 + (y)*2+(z))
 
 typedef struct {
     uint32_t x;
@@ -55,7 +55,7 @@ void c_spawn_grid(estimate_t* t,uint8_t x, uint8_t y, config_t* conf, dot2d* out
 
 }
 
-inline void gradient(uint8_t* x, uint8_t* y,dot2d* dot, int8_t* dimg, config_t* config,float* dout){
+inline void c_gradient(uint8_t* x, uint8_t* y,dot2d* dot, int8_t* dimg, config_t* config,float* dout){
     float rx = ((float)*x)/((float)config->Nx-1);
     float rxi = 1-rx;
     float ry = ((float)*y)/((float)config->Ny-1);
@@ -76,6 +76,22 @@ inline void gradient(uint8_t* x, uint8_t* y,dot2d* dot, int8_t* dimg, config_t* 
     dout[7] *= rxi*ry;  // yd
 }
 
+void c_diff_image(uint8_t* img,int8_t* dimg, config_t* conf){
+    uint32_t x,y;
+    uint32_t xmax = conf->img_size[0]-1;
+    uint32_t ymax = conf->img_size[1]-1;
+//    printf("img size x %i img size y %i\n",conf->img_size[0],conf->img_size[1]);
+//    printf("index of 0,0 : %i (%i)\n", IMG_INDEX(0,0,conf),0*conf->img_size[1]+0);
+    for (x=1;x<xmax;x++){
+        for (y=1;y<ymax;y++){
+//            printf("%i %i\n",x,y);
+//            printf("%i %i %i\n",DIMG_INDEX(x,y,0,conf),IMG_INDEX(x+1,y,conf),IMG_INDEX(x-1,y,conf));
+            dimg[DIMG_INDEX(x,y,0,conf)] = (img[IMG_INDEX(x+1,y,conf)]-img[IMG_INDEX(x-1,y,conf)])/2;
+            dimg[DIMG_INDEX(x,y,1,conf)] = (img[IMG_INDEX(x,y+1,conf)]-img[IMG_INDEX(x,y-1,conf)])/2;
+        }
+    }
+}
+
 void c_likelihood(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* config, uint32_t* out, float* dout){
     uint8_t x,y;
     dot2d dot;
@@ -89,7 +105,7 @@ void c_likelihood(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* con
         for(y=0;y<config->Ny;y++){
             c_spawn_grid(estimate,x,y,config,&dot);
             *out += img[IMG_INDEX(dot.x,dot.y,config)];
-            gradient(&x,&y,&dot,dimg,config,tmp);
+            c_gradient(&x,&y,&dot,dimg,config,tmp);
             for(i=0;i<config->N_params;i++){
                 dout[i] += tmp[i];
             }
