@@ -65,7 +65,7 @@ class Test(TestCase):
         cost, grad = likelihood(estimate.ravel(), img)
         assert cost < best_cost
         grad = grad.reshape(2, -1)
-        assert np.all(grad[0] > 0)
+        assert np.all(grad[0] > 10)
         assert np.all(grad[1] == 0)
         pass
 
@@ -81,6 +81,14 @@ class Test(TestCase):
 
     def test_gradient(self):
         est = self.default_estimate
-        dimg = self.get_test_dimg().ravel()
-        grad = gradient(est, dimg)
+        est = (est.reshape(2,-1)-np.array([3,0],dtype=np.uint8)[:,None]).ravel()
+        grid = spawn_grid(est)
+        dimg = self.get_test_dimg()
+        print(f"img shape: {dimg.shape}")
+        print(get_default_config(dimg))
+        res = np.zeros((np.prod(Nb_dots), 8),dtype=np.float32)
+        for i, (x, y) in enumerate(product(*[range(i) for i in Nb_dots])):
+            dot = dict(zip("xy", grid[i]))
+            # print(f"expected_index: {np.ravel_multi_index(tuple(np.transpose([grid[i].tolist()+[0]])),dimg.shape)[0]}")
+            gradient(x, y, dot, dimg, res[i])
         pass

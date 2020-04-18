@@ -96,16 +96,10 @@ cpdef likelihood(uint16_t[::1] estimate, img):
 
     return res, dres
 
-cpdef gradient(uint16_t[::1] estimate,int8_t[::1] dimg)except+:
+cpdef void gradient(uint8_t x, uint8_t y, dot2d dot, dimg,float[::1] out)except+:
+    cdef int8_t[::1] _dimg = dimg.ravel()
     cdef config_t conf = get_default_config(dimg)
-    cdef uint8_t x,y;
-    res = pnp.zeros((pnp.prod(Nb_dots),conf.N_params),dtype=pnp.float32)
-    cdef float[:,:] _res = res
-    cdef dot2d dot;
-    for i,(x, y) in enumerate(product(*[range(i) for i in Nb_dots])):
-        c_spawn_grid(<estimate_t*>(&estimate[0]),x,y,&conf,&dot)
-        c_gradient(&x,&y,&dot,&dimg[0],&conf,&_res[i,0])
-    return res
+    c_gradient(&x,&y,&dot,&_dimg[0],&conf,&out[0])
 
 cpdef diff_image(uint8_t[:,::1] img) except+:
     cdef config_t conf = get_default_config(img)

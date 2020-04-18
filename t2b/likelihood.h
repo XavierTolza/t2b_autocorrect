@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 #define IMG_INDEX(x,y,c)    ((x) * c->img_size[1] + (y))
-#define DIMG_INDEX(x,y,z,c) ((x) * c->img_size[1]*2 + (y)*2+(z))
+#define DIMG_INDEX(x,y,z,c) (((x) * c->img_size[1]*2) + ((y)*2)+(z))
 
 typedef struct {
     uint32_t x;
@@ -61,9 +61,17 @@ inline void c_gradient(uint8_t* x, uint8_t* y,dot2d* dot, int8_t* dimg, config_t
     float ry = ((float)*y)/((float)config->Ny-1);
     float ryi = 1-ry;
 
-//    printf("%i\n",dimg[DIMG_INDEX(dot->x,dot->y,0,config)]);
-    memset((void*)dout,dimg[DIMG_INDEX(dot->x,dot->y,0,config)],sizeof(float)*config->N_params/2);
-    memset((void*)(dout+config->N_params/2),dimg[DIMG_INDEX(dot->x,dot->y,1,config)],sizeof(float)*config->N_params/2);
+    int8_t dimg_x = dimg[DIMG_INDEX(dot->x,dot->y,0,config)];
+    int8_t dimg_y = dimg[DIMG_INDEX(dot->x,dot->y,1,config)];
+    printf("dimgx: %i dimgy: %i\n", dimg_x,dimg_y);
+
+    uint8_t i;
+    for (i=0;i<config->N_params/2;i++){
+        dout[i] = dimg_x;
+    }
+    for (i=config->N_params/2;i<config->N_params;i++){
+        dout[i] = dimg_y;
+    }
 
     dout[0] *= rxi*ryi; // xa
     dout[1] *= rx*ryi;  // xb
@@ -112,6 +120,19 @@ void c_likelihood(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* con
         }
     }
     free(tmp);
+}
+
+void c_iterate_estimate(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* conf, uint8_t n_steps){
+    uint8_t i;
+    float* grad = (float*) malloc(conf->N_params);
+    uint32_t likelihood;
+
+    for(i=0; i<n_steps; i++){
+        // Compute everything
+        c_likelihood(estimate,img,dimg,conf,&likelihood,grad);
+    }
+
+    free(grad);
 }
 
 #endif
