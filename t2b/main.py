@@ -8,7 +8,6 @@ except ImportError:
     plt = None
 import numpy as np
 
-from t2b.likelihood import likelihood, gen_all_indexes
 from t2b.line_likelihood import line_likelihood, line_find_coordinates
 from t2b.constants import Nb_dots
 from t2b.tools import charger_motifs, rot_matrix

@@ -38,8 +38,10 @@ cdef extern from "likelihood.h":
     void c_likelihood(estimate_t* estimate, uint8_t* img, int8_t* dimg, config_t* config, uint32_t* out, float* dout)nogil
     void c_diff_image(uint8_t* img,int8_t* dimg, config_t* conf)nogil except+
     void c_gradient(uint8_t* x, uint8_t* y,dot2d* dot, int8_t* dimg, config_t* config,float* dout)nogil
-    void c_iterate_estimate(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* conf, uint8_t* n_steps,
-                        float learning_rate)nogil
+    void c_iterate_estimate(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* conf, uint32_t* n_steps,
+                        float learning_rate, float exp_average_ratio)nogil
+    void c_iterate_many_estimates(estimate_t * estimate, uint32_t n_estimates, uint8_t* img, int8_t* dimg, config_t* conf, uint32_t* n_steps,
+                        float learning_rate,float exp_average_ratio)nogil
 
 cdef uint32_t Nb_dots_x = Nb_dots[0]
 cdef uint32_t Nb_dots_y = Nb_dots[1]
@@ -119,10 +121,14 @@ cpdef diff_image(uint8_t[:,::1] img) except+:
 
     return res.reshape((img.shape[0],img.shape[1],2))
 
-cpdef iterate_estimate(est_t[::1] estimate, img,int8_t[::1] dimg, uint8_t n_steps, float learning_rate):
+cpdef iterate_estimate(estimate, img,int8_t[::1] dimg, uint32_t n_steps, float learning_rate, float decay):
     cdef config_t conf = get_default_config(img)
+    estimate = pnp.reshape(estimate,(-1,conf.N_params)).astype(estimate_dtype)
+    cdef uint32_t N_estimates = estimate.shape[0]
+    cdef est_t[::1] _estimate = estimate.ravel()
     cdef uint8_t[:] _img = img.ravel()
-    c_iterate_estimate(<estimate_t*>&estimate[0],&_img[0],&dimg[0],&conf,&n_steps,learning_rate)
+    c_iterate_many_estimates(<estimate_t*>&_estimate[0],N_estimates,
+                             &_img[0],&dimg[0],&conf,&n_steps,learning_rate, decay)
 
     # res = pnp.zeros_like(estimate)
     # cdef uint8_t i

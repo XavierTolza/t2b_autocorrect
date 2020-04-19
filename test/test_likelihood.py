@@ -1,3 +1,5 @@
+from glob import glob
+from os.path import abspath, dirname, join
 from unittest import TestCase
 
 import cv2
@@ -6,6 +8,7 @@ from t2b.likelihood import *
 import numpy as np
 import matplotlib.pyplot as plt
 from t2b.constants import Nb_dots
+from t2b.main import *
 
 
 class Test(TestCase):
@@ -73,7 +76,7 @@ class Test(TestCase):
         print(img.shape)
         dimg = diff_image(img)
         assert np.all(dimg[50, 50, :] == 0)
-        plt.imshow(dimg[:,:,0])
+        plt.imshow(dimg[:, :, 0])
         pass
 
     def get_test_dimg(self, *args, **kwargs):
@@ -98,6 +101,34 @@ class Test(TestCase):
         img = self.get_test_image(est)
         est = (est.reshape(2, -1) - np.array([3, 0], dtype=np.uint8)[:, None]).ravel()
         dimg = diff_image(img)
-        cost,grad = likelihood(est,img)
-        iterate_estimate(est, img, dimg.ravel(), 100, 1/(10*255))
-        pass
+        cost, grad = likelihood(est, img)
+        iterate_estimate(est, img, dimg.ravel(), 30, 1 / (10 * 255), 0.5)
+        est = np.round(est).astype(np.uint16)
+
+    @property
+    def images(self):
+        for i in glob(join(dirname(abspath(__file__)), "test*/*")):
+            image = load_image(i, page_extract=False)
+            imbw = img_to_bw(image)
+            ks = guess_kernel_size(imbw)
+            imc = match_filter_image(imbw, ks, int(np.sqrt(ks)))
+            yield normalize(imc)
+
+    def test_iterate_estimate2(self):
+        for i, img in enumerate(self.images):
+            img = (img * 255).astype(np.uint8)
+            cv2.imwrite(f"/tmp/{i}.jpg", img)
+            dimg = diff_image(img)
+
+            estimate = np.reshape([100, 100, 700, 100, 700, 500, 100, 500], (-1, 2))
+            estimate = estimate[None] + np.random.uniform(-100, 100, (100,) + estimate.shape)
+            # estimate = np.random.uniform(0, 1, (4, 2)) * np.array(img.shape)[None, :]
+            estimate = np.moveaxis(estimate, 1, -1).reshape(-1, 8).astype(np.float32)
+
+            iterate_estimate(estimate, img, dimg.ravel(), 2000, 1 / (10 * 255), 0.5)
+
+            plt.imshow(img.T, origin="lower")
+            plot_lines = np.moveaxis(estimate.reshape(estimate.shape[0], 2, -1), [1,0], [0,-1])
+            plt.plot(*plot_lines)
+
+            pass

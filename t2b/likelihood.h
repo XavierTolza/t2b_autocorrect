@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #define IMG_INDEX(x,y,c)    ((x) * c->img_size[1] + (y))
+#define IMG_INDEX_CORRECT(i,c)    (i< (uint32_t)(c->img_size[0]* c->img_size[1]))
 #define DIMG_INDEX(x,y,z,c) (((x) * c->img_size[1]*2) + ((y)*2)+(z))
 
 typedef float est_t;
@@ -66,7 +67,6 @@ inline void c_gradient(uint8_t* x, uint8_t* y,dot2d* dot, int8_t* dimg, config_t
 
     int8_t dimg_x = dimg[DIMG_INDEX(dot->x,dot->y,0,config)];
     int8_t dimg_y = dimg[DIMG_INDEX(dot->x,dot->y,1,config)];
-//    printf("dimgx: %i dimgy: %i\n", dimg_x,dimg_y);
 
     uint8_t i;
     for (i=0;i<config->N_params/2;i++){
@@ -91,12 +91,8 @@ void c_diff_image(uint8_t* img,int8_t* dimg, config_t* conf){
     uint32_t x,y;
     uint32_t xmax = conf->img_size[0]-1;
     uint32_t ymax = conf->img_size[1]-1;
-//    printf("img size x %i img size y %i\n",conf->img_size[0],conf->img_size[1]);
-//    printf("index of 0,0 : %i (%i)\n", IMG_INDEX(0,0,conf),0*conf->img_size[1]+0);
     for (x=1;x<xmax;x++){
         for (y=1;y<ymax;y++){
-//            printf("%i %i\n",x,y);
-//            printf("%i %i %i\n",DIMG_INDEX(x,y,0,conf),IMG_INDEX(x+1,y,conf),IMG_INDEX(x-1,y,conf));
             dimg[DIMG_INDEX(x,y,0,conf)] = (img[IMG_INDEX(x+1,y,conf)]-img[IMG_INDEX(x-1,y,conf)])/2;
             dimg[DIMG_INDEX(x,y,1,conf)] = (img[IMG_INDEX(x,y+1,conf)]-img[IMG_INDEX(x,y-1,conf)])/2;
         }
@@ -108,6 +104,7 @@ void c_likelihood(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* con
     dot2d dot;
     *out = 0;
     uint8_t i;
+    uint32_t img_index;
     memset((void*)dout,0,config->N_params*sizeof(dout[0]));
 
     float* tmp = (float*) malloc(config->N_params*sizeof(dout[0]));
@@ -115,35 +112,57 @@ void c_likelihood(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* con
     for(x=0;x<config->Nx;x++){
         for(y=0;y<config->Ny;y++){
             c_spawn_grid(estimate,x,y,config,&dot);
-            *out += img[IMG_INDEX(dot.x,dot.y,config)];
-            c_gradient(&x,&y,&dot,dimg,config,tmp);
-            for(i=0;i<config->N_params;i++){
-                dout[i] += tmp[i];
+            img_index = IMG_INDEX(dot.x,dot.y,config);
+            if IMG_INDEX_CORRECT(img_index,config){
+                *out += img[img_index];
+                c_gradient(&x,&y,&dot,dimg,config,tmp);
+                for(i=0;i<config->N_params;i++){
+                    dout[i] += tmp[i];
+                }
             }
         }
     }
     free(tmp);
 }
 
-void c_iterate_estimate(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* conf, uint8_t* n_steps,
-                        float learning_rate){
-    uint8_t i,j;
-    float* grad = (float*) malloc((conf->N_params)*sizeof(float));
+void c_iterate_estimate(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* conf, uint32_t* n_steps,
+                        float learning_rate,float exp_average_ratio){
+    uint8_t j;
+    uint32_t i;
     uint32_t likelihood;
     est_t * _estimate = (est_t*)estimate;
+
+    // Define gradient memory
+    uint8_t buffer_size_bytes = (conf->N_params)*sizeof(gradient_t)*2;
+    gradient_t* buffer = (gradient_t*) malloc(buffer_size_bytes);
+    memset(buffer,0,buffer_size_bytes);
+
+    gradient_t* grad = buffer;
+    gradient_t* m = buffer+conf->N_params;
+
+
 
     for(i=0; i<*n_steps; i++){
         // Compute everything
         c_likelihood(estimate,img,dimg,conf,&likelihood,grad);
 
         for(j=0;j<conf->N_params;j++){
-            printf("%f ",_estimate[j]);
-            _estimate[j] += grad[j]*learning_rate;
+            // Update exp average of gradient
+            m[j] *= exp_average_ratio;
+            m[j] += (1-exp_average_ratio)*grad[j];
+
+            _estimate[j] += m[j]*learning_rate;
         }
-        printf("\n");
     }
 
-    free(grad);
+    free(buffer);
 }
 
+void c_iterate_many_estimates(estimate_t * estimate, uint32_t n_estimates, uint8_t* img, int8_t* dimg, config_t* conf, uint32_t* n_steps,
+                        float learning_rate,float exp_average_ratio){
+    uint32_t i;
+    for (i=0;i<n_estimates;i++){
+        c_iterate_estimate(estimate+i,img,dimg,conf,n_steps,learning_rate,exp_average_ratio);
+    }
+}
 #endif
