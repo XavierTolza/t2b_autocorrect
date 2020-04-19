@@ -10,16 +10,20 @@ from libc.math cimport cos,sin,sqrt
 
 from t2b.constants import Nb_dots
 
+estimate_dtype = pnp.float32
+
 cdef extern from "likelihood.h":
+    ctypedef float est_t
+    ctypedef est_t gradient_t
     ctypedef struct estimate_t:
-        uint16_t xa;
-        uint16_t xb;
-        uint16_t xc;
-        uint16_t xd;
-        uint16_t ya;
-        uint16_t yb;
-        uint16_t yc;
-        uint16_t yd;
+        est_t xa;
+        est_t xb;
+        est_t xc;
+        est_t xd;
+        est_t ya;
+        est_t yb;
+        est_t yc;
+        est_t yd;
     ctypedef struct config_t:
         uint8_t Nx;
         uint8_t Ny;
@@ -34,6 +38,8 @@ cdef extern from "likelihood.h":
     void c_likelihood(estimate_t* estimate, uint8_t* img, int8_t* dimg, config_t* config, uint32_t* out, float* dout)nogil
     void c_diff_image(uint8_t* img,int8_t* dimg, config_t* conf)nogil except+
     void c_gradient(uint8_t* x, uint8_t* y,dot2d* dot, int8_t* dimg, config_t* config,float* dout)nogil
+    void c_iterate_estimate(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* conf, uint8_t* n_steps,
+                        float learning_rate)nogil
 
 cdef uint32_t Nb_dots_x = Nb_dots[0]
 cdef uint32_t Nb_dots_y = Nb_dots[1]
@@ -53,7 +59,7 @@ cpdef config_t get_default_config(image=None)except+:
     return res
 
 
-cpdef spawn_grid(uint16_t[::1] estimate):
+cpdef spawn_grid(est_t[::1] estimate):
     res = pnp.zeros((Nb_dots_x*Nb_dots_y,2),dtype=pnp.uint32)
     cdef uint32_t[:, ::1] _res =  res
     cdef uint8_t x,y
@@ -66,7 +72,7 @@ cpdef spawn_grid(uint16_t[::1] estimate):
             i+=1
     return res
 
-cpdef spawn_grid_float(uint16_t[::1] estimate):
+cpdef spawn_grid_float(est_t[::1] estimate):
     res = pnp.zeros((Nb_dots_x*Nb_dots_y,2),dtype=pnp.float32)
     cdef float[:, ::1] _res =  res
     cdef uint8_t x,y
@@ -79,7 +85,7 @@ cpdef spawn_grid_float(uint16_t[::1] estimate):
             i+=1
     return res
 
-cpdef likelihood(uint16_t[::1] estimate, img):
+cpdef likelihood(est_t[::1] estimate, img):
     assert img.ndim==2
     cdef uint8_t[::1] _img = pnp.ascontiguousarray(img.ravel())
     dimg_python = pnp.zeros(pnp.prod(img.shape+(2,)),dtype=pnp.int8)
@@ -112,3 +118,15 @@ cpdef diff_image(uint8_t[:,::1] img) except+:
     c_diff_image(img_p,&_res[0],&conf)
 
     return res.reshape((img.shape[0],img.shape[1],2))
+
+cpdef iterate_estimate(est_t[::1] estimate, img,int8_t[::1] dimg, uint8_t n_steps, float learning_rate):
+    cdef config_t conf = get_default_config(img)
+    cdef uint8_t[:] _img = img.ravel()
+    c_iterate_estimate(<estimate_t*>&estimate[0],&_img[0],&dimg[0],&conf,&n_steps,learning_rate)
+
+    # res = pnp.zeros_like(estimate)
+    # cdef uint8_t i
+    # for i in range(conf.N_params):
+    #     res[i] = estimate[i]
+    #
+    # return res

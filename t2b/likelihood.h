@@ -8,20 +8,23 @@
 #define IMG_INDEX(x,y,c)    ((x) * c->img_size[1] + (y))
 #define DIMG_INDEX(x,y,z,c) (((x) * c->img_size[1]*2) + ((y)*2)+(z))
 
+typedef float est_t;
+typedef est_t gradient_t;
+
 typedef struct {
     uint32_t x;
     uint32_t y;
     }dot2d;
 
 typedef struct {
-    uint16_t xa;
-    uint16_t xb;
-    uint16_t xc;
-    uint16_t xd;
-    uint16_t ya;
-    uint16_t yb;
-    uint16_t yc;
-    uint16_t yd;
+    est_t xa;
+    est_t xb;
+    est_t xc;
+    est_t xd;
+    est_t ya;
+    est_t yb;
+    est_t yc;
+    est_t yd;
 }estimate_t;
 
 typedef struct {
@@ -55,7 +58,7 @@ void c_spawn_grid(estimate_t* t,uint8_t x, uint8_t y, config_t* conf, dot2d* out
 
 }
 
-inline void c_gradient(uint8_t* x, uint8_t* y,dot2d* dot, int8_t* dimg, config_t* config,float* dout){
+inline void c_gradient(uint8_t* x, uint8_t* y,dot2d* dot, int8_t* dimg, config_t* config,gradient_t* dout){
     float rx = ((float)*x)/((float)config->Nx-1);
     float rxi = 1-rx;
     float ry = ((float)*y)/((float)config->Ny-1);
@@ -63,7 +66,7 @@ inline void c_gradient(uint8_t* x, uint8_t* y,dot2d* dot, int8_t* dimg, config_t
 
     int8_t dimg_x = dimg[DIMG_INDEX(dot->x,dot->y,0,config)];
     int8_t dimg_y = dimg[DIMG_INDEX(dot->x,dot->y,1,config)];
-    printf("dimgx: %i dimgy: %i\n", dimg_x,dimg_y);
+//    printf("dimgx: %i dimgy: %i\n", dimg_x,dimg_y);
 
     uint8_t i;
     for (i=0;i<config->N_params/2;i++){
@@ -122,14 +125,22 @@ void c_likelihood(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* con
     free(tmp);
 }
 
-void c_iterate_estimate(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* conf, uint8_t n_steps){
-    uint8_t i;
-    float* grad = (float*) malloc(conf->N_params);
+void c_iterate_estimate(estimate_t* estimate, uint8_t* img,int8_t* dimg, config_t* conf, uint8_t* n_steps,
+                        float learning_rate){
+    uint8_t i,j;
+    float* grad = (float*) malloc((conf->N_params)*sizeof(float));
     uint32_t likelihood;
+    est_t * _estimate = (est_t*)estimate;
 
-    for(i=0; i<n_steps; i++){
+    for(i=0; i<*n_steps; i++){
         // Compute everything
         c_likelihood(estimate,img,dimg,conf,&likelihood,grad);
+
+        for(j=0;j<conf->N_params;j++){
+            printf("%f ",_estimate[j]);
+            _estimate[j] += grad[j]*learning_rate;
+        }
+        printf("\n");
     }
 
     free(grad);

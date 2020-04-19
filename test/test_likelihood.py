@@ -10,13 +10,12 @@ from t2b.constants import Nb_dots
 
 class Test(TestCase):
     def test_spawn_grid0(self):
-        dtype = np.uint16
-        res = spawn_grid(np.zeros(8, dtype=dtype))
+        res = spawn_grid(np.zeros(8, dtype=estimate_dtype))
         assert res.shape == (np.prod(Nb_dots), 2)
         assert np.all(res == 0)
 
     def test_spawn_grid1(self):
-        dtype = np.uint16
+        dtype = estimate_dtype
         estimate = np.array([0, Nb_dots[0] - 1, Nb_dots[0] - 1, 0, 0, 0, Nb_dots[1] - 1, Nb_dots[1] - 1], dtype=dtype)
         res = spawn_grid(estimate)
         expectation = np.array(list(product(*[np.arange(i, dtype=dtype) for i in Nb_dots]))).astype(dtype)
@@ -26,7 +25,7 @@ class Test(TestCase):
         return
 
     def test_spawn_grid2(self):
-        dtype = np.uint16
+        dtype = estimate_dtype
         estimate = np.array([0, Nb_dots[0], Nb_dots[0], 0, 0, 0, Nb_dots[1] * 2, Nb_dots[1]], dtype=dtype)
         res = spawn_grid_float(estimate)
         res_int = spawn_grid(estimate)
@@ -36,12 +35,12 @@ class Test(TestCase):
 
     @property
     def default_estimate(self):
-        return np.array([50, 800, 800, 50, 50, 50, 600, 600], dtype=np.uint16)
+        return np.array([50, 800, 800, 50, 50, 50, 600, 600], dtype=estimate_dtype)
 
     def get_test_image(self, estimate=None, sigma=3):
         if estimate is None:
             estimate = self.default_estimate
-        coord = spawn_grid(estimate.astype(np.uint16))
+        coord = spawn_grid(estimate.astype(estimate_dtype))
         max = coord.max(0)
         shape = max * 1.1
         res = np.zeros(tuple(shape.astype(int)))
@@ -74,6 +73,7 @@ class Test(TestCase):
         print(img.shape)
         dimg = diff_image(img)
         assert np.all(dimg[50, 50, :] == 0)
+        plt.imshow(dimg[:,:,0])
         pass
 
     def get_test_dimg(self, *args, **kwargs):
@@ -81,14 +81,23 @@ class Test(TestCase):
 
     def test_gradient(self):
         est = self.default_estimate
-        est = (est.reshape(2,-1)-np.array([3,0],dtype=np.uint8)[:,None]).ravel()
+        est = (est.reshape(2, -1) - np.array([3, 0], dtype=np.uint8)[:, None]).ravel()
         grid = spawn_grid(est)
         dimg = self.get_test_dimg()
         print(f"img shape: {dimg.shape}")
         print(get_default_config(dimg))
-        res = np.zeros((np.prod(Nb_dots), 8),dtype=np.float32)
+        res = np.zeros((np.prod(Nb_dots), 8), dtype=np.float32)
         for i, (x, y) in enumerate(product(*[range(i) for i in Nb_dots])):
             dot = dict(zip("xy", grid[i]))
             # print(f"expected_index: {np.ravel_multi_index(tuple(np.transpose([grid[i].tolist()+[0]])),dimg.shape)[0]}")
             gradient(x, y, dot, dimg, res[i])
+        pass
+
+    def test_iterate_estimate(self):
+        est = self.default_estimate
+        img = self.get_test_image(est)
+        est = (est.reshape(2, -1) - np.array([3, 0], dtype=np.uint8)[:, None]).ravel()
+        dimg = diff_image(img)
+        cost,grad = likelihood(est,img)
+        iterate_estimate(est, img, dimg.ravel(), 100, 1/(10*255))
         pass
