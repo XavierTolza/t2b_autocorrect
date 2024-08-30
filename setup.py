@@ -67,7 +67,7 @@ setup(
     packages=[name],  # same as name
     install_requires="""click==7.1.1
 numpy==1.18.2
-opencv-python==4.2.0.32""".split('\n'),
+opencv-python==4.8.1.78""".split('\n'),
     entry_points={
         'console_scripts': ['t2b=t2b.cli:cli'],
     },
